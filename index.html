@@ -4096,38 +4096,62 @@ function useProgress() {
   const [progress, setProgress] = useState(null);
   const [loaded, setLoaded] = useState(false);
 
+  // Busca o progresso do aluno atualmente identificado (window.storage._alunoId).
+  // Se não existir ainda no Firestore (aluno novo), devolve um estado em
+  // branco já com nome/turma preenchidos, em vez de lançar erro.
+  const carregarDoAlunoAtual = useCallback(async (nomeFallback, turmaFallback) => {
+    try {
+      const res = await window.storage.get("progresso-gramatica");
+      const parsed = res ? JSON.parse(res.value) : null;
+      return parsed
+        ? { ...estadoInicialProgress(), ...parsed }
+        : { ...estadoInicialProgress(), nome: nomeFallback || "", turma: turmaFallback || "" };
+    } catch {
+      return { ...estadoInicialProgress(), nome: nomeFallback || "", turma: turmaFallback || "" };
+    }
+  }, []);
+
   useEffect(() => {
     (async () => {
-      try {
-        const res = await window.storage.get("progresso-gramatica");
-        const parsed = res ? JSON.parse(res.value) : null;
-        setProgress(parsed ? { ...estadoInicialProgress(), ...parsed } : estadoInicialProgress());
-      } catch {
-        setProgress(estadoInicialProgress());
-      }
+      const p = await carregarDoAlunoAtual();
+      setProgress(p);
       setLoaded(true);
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const save = useCallback(async (next) => {
     setProgress(next);
-    if (next.nome && next.turma) {
-      const alunoId = slugifyIdentidade(next.nome) + "-" + next.turma;
-      if (window.storage.getAlunoId() !== alunoId) {
-        window.storage.setAlunoId(alunoId);
-        try {
-          localStorage.setItem("aluno-identidade", JSON.stringify({ nome: next.nome, turma: next.turma }));
-        } catch {
-          /* sem localStorage disponível — identidade só dura esta sessão */
-        }
-      }
-    }
     try {
       await window.storage.set("progresso-gramatica", JSON.stringify(next));
     } catch {
       /* silencioso: progresso local ainda funciona nesta sessão */
     }
   }, []);
+
+  // Chamado quando nome+turma ficam conhecidos (tela inicial, ou de novo após
+  // "trocar de aluno"). Busca primeiro o progresso JÁ SALVO dessa identidade
+  // no Firestore — sem isso, reentrar com o mesmo nome sobrescreveria o
+  // histórico existente com um estado em branco.
+  const identificarAluno = useCallback(
+    async (nome, turma) => {
+      const alunoId = slugifyIdentidade(nome) + "-" + turma;
+      window.storage.setAlunoId(alunoId);
+      try {
+        localStorage.setItem("aluno-identidade", JSON.stringify({ nome, turma }));
+      } catch {
+        /* sem localStorage disponível — identidade só dura esta sessão */
+      }
+      const existente = await carregarDoAlunoAtual(nome, turma);
+      setProgress(existente);
+      try {
+        await window.storage.set("progresso-gramatica", JSON.stringify(existente));
+      } catch {
+        /* silencioso: fica local nesta sessão, tenta de novo no próximo save */
+      }
+    },
+    [carregarDoAlunoAtual]
+  );
 
   // Limpa a identidade salva NESTE computador — não apaga o progresso do
   // aluno no Firestore, só "desconecta" este aparelho dele, para o próximo
@@ -4143,7 +4167,7 @@ function useProgress() {
     setProgress(estadoInicialProgress());
   }, []);
 
-  return { progress, save, loaded, trocarAluno };
+  return { progress, save, loaded, trocarAluno, identificarAluno };
 }
 
 const PROFESSOR_STORAGE_KEY = "perguntas-custom-professor";
@@ -5493,7 +5517,7 @@ function ProfessorPanel({ custom, onSave, onExit }) {
    ========================================================================= */
 
 function App() {
-  const { progress, save, loaded, trocarAluno } = useProgress();
+  const { progress, save, loaded, trocarAluno, identificarAluno } = useProgress();
   const { custom, save: saveCustom, loaded: customLoaded } = useCustomQuestions();
   // trilha | teoria | licao | resultado | colecao | relatorio | professorLogin | professorPanel
   const [view, setView] = useState("trilha");
@@ -5569,7 +5593,7 @@ function App() {
         <div className="blob blob-b" />
         <div className="blob blob-c" />
         <NomeScreen
-          onSubmit={(nome, turma) => save({ ...progress, nome, turma })}
+          onSubmit={(nome, turma) => identificarAluno(nome, turma)}
           nomeInicial={progress.nome}
           turmaInicial={progress.turma}
         />
