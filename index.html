@@ -158,7 +158,7 @@ const TOPICS = [
       {
         type: "mcq",
         prompt: "Qual destas palavras é um substantivo?",
-        options: ["floresta", "cantar", "doce", "devagar"],
+        options: ["floresta", "cantar", "gentil", "devagar"],
         correct: "floresta",
       },
       {
@@ -228,7 +228,7 @@ const TOPICS = [
         items: [
           { word: "feliz", bucket: "Adjetivo" },
           { word: "carro", bucket: "Substantivo" },
-          { word: "gigante", bucket: "Adjetivo" },
+          { word: "gentil", bucket: "Adjetivo" },
           { word: "porta", bucket: "Substantivo" },
           { word: "curioso", bucket: "Adjetivo" },
           { word: "janela", bucket: "Substantivo" },
@@ -4599,16 +4599,16 @@ function LicaoScreen({ topic, onFinish, onExit, onEachAnswer, onFail }) {
         </div>
 
         {ex.type === "mcq" && (
-          <McqExercise ex={ex} onAnswer={handleAnswer} locked={!!feedback} feedback={feedback} />
+          <McqExercise key={idx} ex={ex} onAnswer={handleAnswer} locked={!!feedback} feedback={feedback} />
         )}
         {ex.type === "classify" && (
-          <ClassifyExercise ex={ex} onAnswer={handleAnswer} locked={!!feedback} feedback={feedback} />
+          <ClassifyExercise key={idx} ex={ex} onAnswer={handleAnswer} locked={!!feedback} feedback={feedback} />
         )}
         {ex.type === "fillblank" && (
-          <FillblankExercise ex={ex} onAnswer={handleAnswer} locked={!!feedback} feedback={feedback} />
+          <FillblankExercise key={idx} ex={ex} onAnswer={handleAnswer} locked={!!feedback} feedback={feedback} />
         )}
         {ex.type === "dragdrop" && (
-          <DragdropExercise ex={ex} onAnswer={handleAnswer} locked={!!feedback} />
+          <DragdropExercise key={idx} ex={ex} onAnswer={handleAnswer} locked={!!feedback} />
         )}
       </div>
 
