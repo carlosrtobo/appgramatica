@@ -4961,6 +4961,14 @@ function RelatorioScreen({ progress, onExit }) {
       } catch {
         lista = []; // ainda não existe nenhum relatório salvo — começamos a lista agora
       }
+      // Remove qualquer relatório anterior do mesmo aluno (nome + turma) antes
+      // de gravar o novo — evita acumular relatórios desatualizados da mesma
+      // pessoa, o painel do professor sempre mostra só o mais recente.
+      const nomeAtual = (progress.nome || "Aluno(a) sem nome").trim().toLowerCase();
+      const turmaAtual = (progress.turma || "").trim().toLowerCase();
+      lista = lista.filter(
+        (r) => !(String(r.nome || "").trim().toLowerCase() === nomeAtual && String(r.turma || "").trim().toLowerCase() === turmaAtual)
+      );
       lista.push({
         nome: progress.nome || "Aluno(a) sem nome",
         turma: progress.turma || "",
@@ -5091,6 +5099,7 @@ function ProfessorPanel({ custom, onSave, onExit }) {
   const [carregandoRelatorios, setCarregandoRelatorios] = useState(false);
   const [erroRelatorios, setErroRelatorios] = useState("");
   const [filtroTurma, setFiltroTurma] = useState("todas");
+  const [ordenarPor, setOrdenarPor] = useState("nome");
 
   const buscarRelatorios = useCallback(async () => {
     setCarregandoRelatorios(true);
@@ -5293,6 +5302,14 @@ function ProfessorPanel({ custom, onSave, onExit }) {
                 </option>
               ))}
             </select>
+            <select
+              className="prof-select"
+              value={ordenarPor}
+              onChange={(e) => setOrdenarPor(e.target.value)}
+            >
+              <option value="nome">Ordenar por nome (A-Z)</option>
+              <option value="recente">Mais recentes primeiro</option>
+            </select>
           </div>
           {erroRelatorios && <p className="pin-erro">{erroRelatorios}</p>}
           {(() => {
@@ -5309,9 +5326,15 @@ function ProfessorPanel({ custom, onSave, onExit }) {
                 </p>
               );
             }
-            return [...relatoriosFiltrados]
-              .reverse()
-              .map((r, i) => (
+            const relatoriosOrdenados = [...relatoriosFiltrados].sort((a, b) => {
+              if (ordenarPor === "nome") {
+                return String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR", {
+                  sensitivity: "base",
+                });
+              }
+              return new Date(b.data) - new Date(a.data);
+            });
+            return relatoriosOrdenados.map((r, i) => (
                 <div className="relatorio-item" key={i}>
                   <div className="relatorio-item-header">
                     <strong>
