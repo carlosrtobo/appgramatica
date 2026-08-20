@@ -1518,9 +1518,9 @@ const TOPICS_NIVEL2 = [
       },
       {
         type: "classify",
-        prompt: "Clique no adjunto adnominal desta frase:",
+        prompt: "Clique em um adjunto adnominal desta frase:",
         words: ["O", "pequeno", "gato", "dormia"],
-        correct: "pequeno",
+        correct: ["O", "pequeno"],
       },
       {
         type: "mcq",
@@ -1548,15 +1548,15 @@ const TOPICS_NIVEL2 = [
       },
       {
         type: "classify",
-        prompt: "Clique no adjunto adnominal desta frase:",
+        prompt: "Clique em um adjunto adnominal desta frase:",
         words: ["O", "novo", "carro", "brilhava", "ao", "sol"],
-        correct: "novo",
+        correct: ["O", "novo"],
       },
       {
         type: "classify",
-        prompt: "Clique no adjunto adnominal desta frase:",
+        prompt: "Clique em um adjunto adnominal desta frase:",
         words: ["Aquela", "linda", "paisagem", "encantou", "todos"],
-        correct: "linda",
+        correct: ["Aquela", "linda"],
       },
       {
         type: "classify",
@@ -6647,8 +6647,9 @@ function ehPrimeiraTentativaTopico(progress, topicId) {
    ========================================================================= */
 const TAMANHO_TESTE_MODULO = 10;
 
-function gerarQuestoesTesteModulo(moduloId, custom, overridesBase, tamanho = TAMANHO_TESTE_MODULO) {
-  const topicos = topicosDoModulo(moduloId);
+// Sorteia questões de uma lista de tópicos (de um ou vários módulos juntos),
+// priorizando cobrir o máximo de tópicos diferentes antes de repetir.
+function gerarQuestoesDeTopicos(topicos, custom, overridesBase, tamanho) {
   const filas = embaralhar(topicos).map((t) => ({
     topicId: t.id,
     fila: embaralhar(exerciciosEfetivosDoTopico(t, custom, overridesBase)),
@@ -6664,10 +6665,55 @@ function gerarQuestoesTesteModulo(moduloId, custom, overridesBase, tamanho = TAM
         adicionouAlgo = true;
       }
     }
-    if (!adicionouAlgo) break; // esgotou o banco de questões do módulo
+    if (!adicionouAlgo) break; // esgotou o banco de questões disponível
     rodada++;
   }
   return embaralhar(selecionadas);
+}
+
+function gerarQuestoesTesteModulo(moduloId, custom, overridesBase, tamanho = TAMANHO_TESTE_MODULO) {
+  return gerarQuestoesDeTopicos(topicosDoModulo(moduloId), custom, overridesBase, tamanho);
+}
+
+/* =========================================================================
+   TESTE SUPREMO
+   Junta questões de TODOS os módulos já cursados (só a trilha principal, ou
+   só a trilha bônus de figuras) num único teste grande, com vidas em jogo:
+   se as vidas acabam, o teste é interrompido e pode ser refeito do zero
+   (novo sorteio), sem mexer no progresso dos módulos já concluídos.
+   ========================================================================= */
+const TAMANHO_TESTE_SUPREMO_FIGURAS = 20;
+
+// 1ª/2ª série: 30 questões · 3ª série: 50 questões · turma não reconhecida: 30
+function tamanhoTesteSupremo(turma) {
+  const serie = serieDaTurma(turma);
+  return serie === 3 ? 50 : 30;
+}
+
+// ~1 vida a cada 5 questões
+function vidasTesteSupremo(tamanho) {
+  return Math.max(1, Math.round(tamanho / 5));
+}
+
+// Módulos da trilha PRINCIPAL liberados pra turma (nunca inclui a trilha
+// bônus, mesmo no caso raro de turma não reconhecida "liberar tudo").
+function modulosLiberadosPrincipal(turma) {
+  return modulosLiberados(turma).filter((id) => !NIVEIS_BONUS_IDS.includes(id));
+}
+
+function gerarQuestoesTesteSupremo(moduloIds, custom, overridesBase, tamanho) {
+  const topicos = moduloIds.flatMap((id) => topicosDoModulo(id));
+  return gerarQuestoesDeTopicos(topicos, custom, overridesBase, tamanho);
+}
+
+// Todos os tópicos E o teste final de cada módulo da lista já concluídos —
+// é a condição pra liberar o Teste Supremo correspondente.
+function todosModulosCompletos(moduloIds, progress) {
+  return moduloIds.every((id) => {
+    const topicosOk = topicosDoModulo(id).every((t) => progress.concluidos.includes(t.id));
+    const testeOk = !!(progress.testesModulo && progress.testesModulo[id] && progress.testesModulo[id].feito);
+    return topicosOk && testeOk;
+  });
 }
 
 const START_HEARTS = 5; // não usado mais: vidas agora são por módulo (ver VIDAS_POR_MODULO)
@@ -6740,6 +6786,8 @@ function estadoInicialProgress() {
     vidasModulo: {}, // { [moduloId]: vidas restantes (0-8) }
     modulosZerados: [], // [{ moduloId, moduloNome, data }] — histórico p/ relatório
     testesModulo: {}, // { [moduloId]: { feito, ultimaNota: {acertos,total}, historico: [...] } }
+    testeSupremo: null, // { feito, ultimaNota, historico } — trilha principal
+    testeSupremoFiguras: null, // { feito, ultimaNota, historico } — trilha bônus
   };
 }
 
@@ -6960,6 +7008,13 @@ function achievementsParaTurma(turma) {
     segundaChanceAchievement,
     exploradorParaTurma(topicosOk),
     aprovadoEmTudoParaTurma(idsPermitidos),
+    {
+      id: "teste-supremo",
+      nome: "Teste Supremo",
+      icone: "👑",
+      cor: "#813017",
+      condicao: (p) => !!(p.testeSupremo && p.testeSupremo.feito),
+    },
   ];
 
   const colecionadorSupremo = {
@@ -6989,6 +7044,13 @@ function achievementsParaTurma(turma) {
       cor: "#4A4E8B",
       condicao: (p) =>
         NIVEIS_BONUS_IDS.every((moduloId) => !!(p.testesModulo && p.testesModulo[moduloId] && p.testesModulo[moduloId].feito)),
+    },
+    {
+      id: "teste-supremo-figuras",
+      nome: "Teste Supremo das Figuras",
+      icone: "🎭",
+      cor: "#813017",
+      condicao: (p) => !!(p.testeSupremoFiguras && p.testeSupremoFiguras.feito),
     },
   ];
 
@@ -7780,6 +7842,146 @@ function ResultadoTesteScreen({ resultado, onRefazer, onContinuar }) {
 }
 
 /* =========================================================================
+   TESTE SUPREMO
+   Cobre todos os módulos já cursados de uma trilha, com vidas em jogo. Se as
+   vidas acabam, o teste é interrompido — nada do progresso é perdido, só é
+   preciso tentar de novo com um novo sorteio.
+   ========================================================================= */
+
+function TesteSupremoScreen({ questoes, vidasIniciais, titulo, onFinish, onFalhar, onExit }) {
+  const [idx, setIdx] = useState(0);
+  const [vidas, setVidas] = useState(vidasIniciais);
+  const [feedback, setFeedback] = useState(null);
+  const [acertos, setAcertos] = useState(0);
+  const [falhou, setFalhou] = useState(false);
+
+  const ex = questoes[idx];
+  const ultima = idx + 1 >= questoes.length;
+
+  function handleAnswer(correct, picked, pickedIdx) {
+    if (feedback) return;
+    setFeedback({ correct, picked, pickedIdx });
+    if (correct) {
+      setAcertos((a) => a + 1);
+    } else {
+      const nv = vidas - 1;
+      setVidas(nv);
+      if (nv <= 0) {
+        setTimeout(() => setFalhou(true), 900);
+      }
+    }
+  }
+
+  function next() {
+    if (falhou) return;
+    setFeedback(null);
+    if (ultima) {
+      onFinish(acertos, questoes.length);
+    } else {
+      setIdx(idx + 1);
+    }
+  }
+
+  if (falhou) {
+    return (
+      <div className="screen center-screen">
+        <div className="fail-card">
+          <div className="fail-emoji">✕</div>
+          <h2>Vidas esgotadas!</h2>
+          <p>
+            Você usou todas as vidas do {titulo}. Nenhum progresso dos módulos foi perdido — pode tentar de novo
+            com um novo sorteio de questões, quando estiver pronto.
+          </p>
+          <button className="btn-primary" onClick={onFalhar}>
+            Tentar de novo
+          </button>
+          <button className="btn-secundario" onClick={onExit}>
+            Voltar à trilha
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="screen">
+      <div className="lesson-header">
+        <button className="btn-x" onClick={onExit} aria-label="Sair do teste">
+          ×
+        </button>
+        <div className="progress-track">
+          <div
+            className="progress-fill"
+            style={{ width: `${(idx / questoes.length) * 100}%`, background: "#813017" }}
+          />
+        </div>
+        <div className="hearts hearts-supremo" title="Vidas do Teste Supremo">
+          {Array.from({ length: vidasIniciais }).map((_, i) => (
+            <span key={i} className={i < vidas ? "heart" : "heart heart-lost"}>
+              ♥
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="lesson-body">
+        <div className="topic-tag teste-supremo-tag">
+          👑 {titulo} · {idx + 1}/{questoes.length}
+        </div>
+
+        {ex.type === "mcq" && (
+          <McqExercise key={idx} ex={ex} onAnswer={handleAnswer} locked={!!feedback} feedback={feedback} />
+        )}
+        {ex.type === "classify" && (
+          <ClassifyExercise key={idx} ex={ex} onAnswer={handleAnswer} locked={!!feedback} feedback={feedback} />
+        )}
+        {ex.type === "fillblank" && (
+          <FillblankExercise key={idx} ex={ex} onAnswer={handleAnswer} locked={!!feedback} feedback={feedback} />
+        )}
+        {ex.type === "dragdrop" && (
+          <DragdropExercise key={idx} ex={ex} onAnswer={handleAnswer} locked={!!feedback} />
+        )}
+      </div>
+
+      {feedback && (
+        <div className={"feedback-bar " + (feedback.correct ? "fb-correct" : "fb-wrong")}>
+          <div className="fb-text">
+            {feedback.correct ? "Correto!" : `Quase. Resposta certa marcada acima.`}
+          </div>
+          <button className="btn-primary" onClick={next}>
+            {ultima ? "Ver resultado" : "Continuar"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ResultadoTesteSupremoScreen({ resultado, onRefazer, onContinuar }) {
+  const { acertos, total, xpGanho, titulo } = resultado;
+  const pct = Math.round((acertos / total) * 100);
+  return (
+    <div className="screen center-screen">
+      <div className="result-card">
+        <div className="result-stamp">👑</div>
+        <h2>{titulo} concluído!</h2>
+        <p className="result-sub">
+          {acertos} de {total} corretas ({pct}%)
+        </p>
+        <div className="result-xp">+{xpGanho} XP</div>
+        <p className="teste-relatorio-aviso">📨 Um relatório foi enviado automaticamente ao professor.</p>
+        <button className="btn-primary" onClick={onContinuar}>
+          Voltar à trilha
+        </button>
+        <button className="btn-secundario" onClick={onRefazer}>
+          Refazer
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================================
    TRILHA (MAPA DE NÍVEIS)
    ========================================================================= */
 
@@ -7796,6 +7998,7 @@ function Trilha({
   bonusMode,
   onAbrirBonus,
   onVoltarBonus,
+  onAbrirTesteSupremo,
 }) {
   const achievements = achievementsParaTurma(progress.turma);
   const conquistas = achievements.filter((a) => a.condicao(progress)).length;
@@ -7805,6 +8008,14 @@ function Trilha({
   const niveisVisiveis = bonusMode
     ? NIVEIS.filter((n) => NIVEIS_BONUS_IDS.includes(n.id))
     : NIVEIS.filter((n) => idsPermitidos.includes(n.id) && !NIVEIS_BONUS_IDS.includes(n.id));
+
+  // Teste Supremo: libera quando todos os módulos visíveis desta trilha
+  // (principal ou bônus) já tiverem tópicos + teste final concluídos.
+  const modulosDoSupremo = bonusMode ? NIVEIS_BONUS_IDS : modulosLiberadosPrincipal(progress.turma);
+  const supremoDesbloqueado = modulosDoSupremo.length > 0 && todosModulosCompletos(modulosDoSupremo, progress);
+  const tamanhoSupremo = bonusMode ? TAMANHO_TESTE_SUPREMO_FIGURAS : tamanhoTesteSupremo(progress.turma);
+  const registroSupremo = bonusMode ? progress.testeSupremoFiguras : progress.testeSupremo;
+  const supremoFeito = !!(registroSupremo && registroSupremo.feito);
 
   function confirmarTrocarAluno() {
     const ok = window.confirm(
@@ -7965,6 +8176,36 @@ function Trilha({
           </section>
         );
       })}
+
+      {modulosDoSupremo.length > 0 && (
+        <section className="nivel-section supremo-section">
+          <div className="nivel-title-row">
+            <div className="nivel-title-topo">
+              <span className="nivel-index nivel-index-supremo">👑 Desafio final</span>
+            </div>
+            <h2>{bonusMode ? "Teste Supremo de Figuras de Linguagem" : "Teste Supremo"}</h2>
+          </div>
+          <div className="node-path">
+            <div className="node-row node-row-supremo">
+              <button
+                className={
+                  "node node-supremo" + (supremoFeito ? " node-done" : "") + (!supremoDesbloqueado ? " node-locked" : "")
+                }
+                disabled={!supremoDesbloqueado}
+                onClick={() => supremoDesbloqueado && onAbrirTesteSupremo()}
+              >
+                {supremoFeito ? "✓" : supremoDesbloqueado ? "👑" : "🔒"}
+              </button>
+              <span className="node-name">
+                {supremoDesbloqueado
+                  ? `${tamanhoSupremo} questões de todos os módulos concluídos`
+                  : "Termine todos os módulos (e os testes finais) para liberar"}
+                {supremoFeito ? ` — última nota ${registroSupremo.ultimaNota.acertos}/${registroSupremo.ultimaNota.total}` : ""}
+              </span>
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
@@ -8123,6 +8364,15 @@ function construirDadosRelatorio(progress) {
   const pctGeral =
     totalAcertos + totalErros > 0 ? Math.round((totalAcertos / (totalAcertos + totalErros)) * 100) : null;
 
+  function resumoTesteSupremo(registro) {
+    if (!registro || !registro.feito) return null;
+    return {
+      acertos: registro.ultimaNota.acertos,
+      total: registro.ultimaNota.total,
+      tentativas: registro.historico ? registro.historico.length : 1,
+    };
+  }
+
   return {
     nome: progress.nome || "Aluno(a) sem nome",
     turma: progress.turma || "",
@@ -8138,6 +8388,8 @@ function construirDadosRelatorio(progress) {
     facilidades,
     dificuldades,
     testes,
+    testeSupremo: resumoTesteSupremo(progress.testeSupremo),
+    testeSupremoFiguras: resumoTesteSupremo(progress.testeSupremoFiguras),
     modulosZerados: modulosZerados.map((m) => ({
       moduloNome: m.moduloNome,
       data: m.data,
@@ -8161,6 +8413,16 @@ function construirTextoRelatorio(progress) {
   const testesTexto = d.testes
     .map((t) => `${t.moduloNome}: ${t.acertos}/${t.total}${t.tentativas > 1 ? ` (${t.tentativas}ª tentativa)` : ""}`)
     .join(", ");
+  const supremoTexto = d.testeSupremo
+    ? `Teste Supremo: ${d.testeSupremo.acertos}/${d.testeSupremo.total}${
+        d.testeSupremo.tentativas > 1 ? ` (${d.testeSupremo.tentativas}ª tentativa)` : ""
+      }`
+    : "";
+  const supremoFigurasTexto = d.testeSupremoFiguras
+    ? `Teste Supremo de Figuras de Linguagem: ${d.testeSupremoFiguras.acertos}/${d.testeSupremoFiguras.total}${
+        d.testeSupremoFiguras.tentativas > 1 ? ` (${d.testeSupremoFiguras.tentativas}ª tentativa)` : ""
+      }`
+    : "";
 
   return [
     `Relatório de progresso — ${d.nome}${d.turma ? ` (${d.turma})` : ""}`,
@@ -8176,6 +8438,8 @@ function construirTextoRelatorio(progress) {
       ? `Dificuldades (1ª tentativa): ${dificuldadesTxt}`
       : "Dificuldades (1ª tentativa): nenhuma dificuldade identificada até agora",
     testesTexto ? `\nTestes finais de módulo: ${testesTexto}` : "",
+    supremoTexto ? `\n${supremoTexto}` : "",
+    supremoFigurasTexto ? `\n${supremoFigurasTexto}` : "",
     d.modulosZerados.length
       ? `\nMódulos reiniciados por vidas esgotadas: ${d.modulosZerados
           .map((m) => `${m.moduloNome} (${new Date(m.data).toLocaleDateString("pt-BR")})`)
@@ -8315,6 +8579,27 @@ function RelatorioCard({ dados }) {
                 {t.tentativas > 1 ? ` (${t.tentativas}ª tentativa)` : ""}
               </li>
             ))}
+          </ul>
+        </div>
+      )}
+
+      {(dados.testeSupremo || dados.testeSupremoFiguras) && (
+        <div className="relatorio-testes relatorio-supremo">
+          <h4>👑 Teste(s) Supremo(s)</h4>
+          <ul className="relatorio-testes-lista">
+            {dados.testeSupremo && (
+              <li>
+                Teste Supremo: <strong>{dados.testeSupremo.acertos}/{dados.testeSupremo.total}</strong>
+                {dados.testeSupremo.tentativas > 1 ? ` (${dados.testeSupremo.tentativas}ª tentativa)` : ""}
+              </li>
+            )}
+            {dados.testeSupremoFiguras && (
+              <li>
+                Teste Supremo de Figuras de Linguagem:{" "}
+                <strong>{dados.testeSupremoFiguras.acertos}/{dados.testeSupremoFiguras.total}</strong>
+                {dados.testeSupremoFiguras.tentativas > 1 ? ` (${dados.testeSupremoFiguras.tentativas}ª tentativa)` : ""}
+              </li>
+            )}
           </ul>
         </div>
       )}
@@ -9373,6 +9658,10 @@ function App() {
   const [testeModuloId, setTesteModuloId] = useState(null);
   const [testeQuestoes, setTesteQuestoes] = useState(null);
   const [lastTesteResult, setLastTesteResult] = useState(null);
+  const [testeSupremoTipo, setTesteSupremoTipo] = useState(null); // "principal" | "figuras"
+  const [testeSupremoQuestoes, setTesteSupremoQuestoes] = useState(null);
+  const [testeSupremoVidas, setTesteSupremoVidas] = useState(0);
+  const [lastTesteSupremoResult, setLastTesteSupremoResult] = useState(null);
   const streakChecked = useRef(false);
   const prevUnlockedRef = useRef(null);
   const [filaConquistas, setFilaConquistas] = useState([]);
@@ -9589,6 +9878,43 @@ function App() {
     setView("resultadoTeste");
   }
 
+  // Sorteia (ou re-sorteia, em caso de "tentar de novo") um Teste Supremo.
+  // tipo: "principal" (trilha do ano da turma) ou "figuras" (trilha bônus).
+  function abrirTesteSupremo(tipo) {
+    if (view === "trilha" || view === "trilhaBonus") setOrigemTrilha(view);
+    const moduloIds = tipo === "figuras" ? NIVEIS_BONUS_IDS : modulosLiberadosPrincipal(progress.turma);
+    const tamanho = tipo === "figuras" ? TAMANHO_TESTE_SUPREMO_FIGURAS : tamanhoTesteSupremo(progress.turma);
+    const vidas = vidasTesteSupremo(tamanho);
+    const questoes = gerarQuestoesTesteSupremo(moduloIds, custom, overridesBase, tamanho);
+    setTesteSupremoTipo(tipo);
+    setTesteSupremoQuestoes(questoes);
+    setTesteSupremoVidas(vidas);
+    setView("testeSupremo");
+  }
+
+  function finishTesteSupremo(acertos, total) {
+    const chave = testeSupremoTipo === "figuras" ? "testeSupremoFiguras" : "testeSupremo";
+    const existente = progress[chave];
+    const jaFeitoAntes = !!(existente && existente.feito);
+    const bonusPrimeiraVez = jaFeitoAntes ? 0 : 50;
+    const xpGanho = acertos * 10 + bonusPrimeiraVez;
+    const novoRegistro = {
+      feito: true,
+      ultimaNota: { acertos, total },
+      historico: [...((existente && existente.historico) || []), { acertos, total, data: new Date().toISOString() }].slice(-10),
+    };
+    const next = { ...progress, xp: progress.xp + xpGanho, [chave]: novoRegistro };
+    save(next);
+    enviarRelatorioAoProfessor(next);
+    setLastTesteSupremoResult({
+      acertos,
+      total,
+      xpGanho,
+      titulo: testeSupremoTipo === "figuras" ? "Teste Supremo de Figuras de Linguagem" : "Teste Supremo",
+    });
+    setView("resultadoTesteSupremo");
+  }
+
   return (
     <div className="app-shell">
       <style>{CSS}</style>
@@ -9607,6 +9933,7 @@ function App() {
           subtrilhas={subtrilhas}
           custom={custom}
           onAbrirBonus={() => setView("trilhaBonus")}
+          onAbrirTesteSupremo={() => abrirTesteSupremo("principal")}
         />
       )}
       {view === "trilhaBonus" && (
@@ -9622,6 +9949,7 @@ function App() {
           custom={custom}
           bonusMode
           onVoltarBonus={() => setView("trilha")}
+          onAbrirTesteSupremo={() => abrirTesteSupremo("figuras")}
         />
       )}
       {view === "teoria" && baseTopic && (
@@ -9659,6 +9987,23 @@ function App() {
         <ResultadoTesteScreen
           resultado={lastTesteResult}
           onRefazer={() => abrirTesteModulo(testeModuloId)}
+          onContinuar={() => setView(origemTrilha)}
+        />
+      )}
+      {view === "testeSupremo" && testeSupremoQuestoes && (
+        <TesteSupremoScreen
+          questoes={testeSupremoQuestoes}
+          vidasIniciais={testeSupremoVidas}
+          titulo={testeSupremoTipo === "figuras" ? "Teste Supremo de Figuras de Linguagem" : "Teste Supremo"}
+          onFinish={finishTesteSupremo}
+          onFalhar={() => abrirTesteSupremo(testeSupremoTipo)}
+          onExit={() => setView(origemTrilha)}
+        />
+      )}
+      {view === "resultadoTesteSupremo" && lastTesteSupremoResult && (
+        <ResultadoTesteSupremoScreen
+          resultado={lastTesteSupremoResult}
+          onRefazer={() => abrirTesteSupremo(testeSupremoTipo)}
           onContinuar={() => setView(origemTrilha)}
         />
       )}
@@ -9929,6 +10274,27 @@ const CSS = `
 .node-name { font-weight: 600; font-size: 14.5px; color: var(--brown); }
 .node-row-teste { margin-top: 2px; }
 .node-teste { border-style: dashed; }
+.supremo-section {
+  background: linear-gradient(135deg, rgba(129,48,23,0.1), rgba(255,138,91,0.12));
+  border-radius: 18px;
+  padding: 16px;
+  margin-top: 6px;
+}
+.nivel-index-supremo {
+  background: rgba(129,48,23,0.14);
+  color: #813017;
+  font-weight: 700;
+}
+.node-supremo {
+  border-style: solid;
+  border-width: 2px;
+  background: #813017;
+  color: #fff;
+}
+.node-row-supremo .node-name { font-weight: 700; }
+.hearts-supremo { flex-wrap: wrap; max-width: 45%; text-align: right; }
+.teste-supremo-tag { background: #813017; }
+.relatorio-supremo { background: rgba(129,48,23,0.1); }
 .node-row-sub { margin-left: 26px; }
 .node-sub {
   width: 36px;
