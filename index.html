@@ -1466,21 +1466,21 @@ const TOPICS_NIVEL2 = [
       },
       {
         type: "classify",
-        prompt: "Clique no complemento nominal desta frase (a palavra completada pela preposição):",
+        prompt: "Clique em uma das palavras do complemento nominal desta frase:",
         words: ["Ele", "sentia", "medo", "de", "altura"],
-        correct: "altura",
+        correct: ["de", "altura"],
       },
       {
         type: "classify",
-        prompt: "Clique no complemento nominal desta frase (a palavra completada pela preposição):",
+        prompt: "Clique em uma das palavras do complemento nominal desta frase:",
         words: ["Tenho", "interesse", "por", "música"],
-        correct: "música",
+        correct: ["por", "música"],
       },
       {
         type: "classify",
-        prompt: "Clique no complemento nominal desta frase (a palavra completada pela preposição):",
+        prompt: "Clique em uma das palavras do complemento nominal desta frase:",
         words: ["Ele", "é", "favorável", "à", "proposta"],
-        correct: "proposta",
+        correct: ["à", "proposta"],
       },
       {
         type: "dragdrop",
@@ -1794,21 +1794,21 @@ const TOPICS_NIVEL2 = [
       },
       {
         type: "classify",
-        prompt: "Clique no agente da passiva desta frase:",
+        prompt: "Clique em uma das palavras do agente da passiva desta frase:",
         words: ["O", "quadro", "foi", "pintado", "por", "Picasso"],
-        correct: "Picasso",
+        correct: ["por", "Picasso"],
       },
       {
         type: "classify",
-        prompt: "Clique no agente da passiva desta frase:",
+        prompt: "Clique em uma das palavras do agente da passiva desta frase:",
         words: ["O", "jantar", "foi", "preparado", "pela", "avó"],
-        correct: "avó",
+        correct: ["pela", "avó"],
       },
       {
         type: "classify",
-        prompt: "Clique no agente da passiva desta frase:",
+        prompt: "Clique em uma das palavras do agente da passiva desta frase:",
         words: ["As", "regras", "foram", "explicadas", "pelo", "professor"],
-        correct: "professor",
+        correct: ["pelo", "professor"],
       },
       {
         type: "dragdrop",
@@ -3922,9 +3922,9 @@ const TOPICS_FIGURAS_PALAVRAS = [
       },
       {
         type: "classify",
-        prompt: "Clique no conectivo que introduz a comparação nesta frase:",
+        prompt: "Clique em uma das palavras do conectivo que introduz a comparação nesta frase:",
         words: ["Ela", "é", "tal", "qual", "a", "mãe", "generosa"],
-        correct: "qual",
+        correct: ["tal", "qual"],
       },
       {
         type: "fillblank",
@@ -4271,7 +4271,7 @@ const TOPICS_FIGURAS_PALAVRAS = [
         type: "classify",
         prompt: "Clique na expressão que substitui o nome próprio (perífrase) nesta frase — clique em uma das palavras dela:",
         words: ["O", "pai", "da", "aviação", "nasceu", "no", "Brasil"],
-        correct: "aviação",
+        correct: ["pai", "da", "aviação"],
       },
       {
         type: "fillblank",
@@ -5679,9 +5679,9 @@ const TOPICS_FIGURAS_SINTAXE = [
       },
       {
         type: "classify",
-        prompt: "Clique na palavra que fica 'solta', sem função sintática clara (anacoluto) nesta frase:",
+        prompt: "Clique em uma das palavras que ficam 'soltas', sem função sintática clara (anacoluto) nesta frase:",
         words: ["Meu", "pai", "ele", "nunca", "erra", "o", "caminho"],
-        correct: "pai",
+        correct: ["Meu", "pai"],
       },
       {
         type: "mcq",
@@ -5736,9 +5736,9 @@ const TOPICS_FIGURAS_SINTAXE = [
       },
       {
         type: "classify",
-        prompt: "Clique na palavra que fica 'solta', sem função sintática clara (anacoluto) nesta frase:",
+        prompt: "Clique em uma das palavras que ficam 'soltas', sem função sintática clara (anacoluto) nesta frase:",
         words: ["A", "vizinha", "ela", "reclama", "de", "tudo"],
-        correct: "vizinha",
+        correct: ["A", "vizinha"],
       },
       {
         type: "mcq",
