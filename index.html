@@ -6433,7 +6433,7 @@ const NIVEIS_BONUS_IDS = [5, 6, 7, 8];
 // Turmas atuais e o módulo (nível) que cada série pode acessar.
 // Módulo 1 = Classes de Palavras · Módulo 2 = Sintaxe da Oração Simples
 // Módulo 3 = Orações Coordenadas · Módulo 4 = Orações Subordinadas
-const TURMAS = ["1AA", "1DB", "1IA", "1IB", "2DB", "2IA", "3IA"];
+const TURMAS = ["1AA", "1DB", "1IA", "1IB", "2DB", "2IA", "3IA", "3BE"];
 
 // Paleta fixa por turma, só pra dar identidade visual no painel do professor
 // (pílula colorida no cabeçalho de cada relatório do accordion).
@@ -8303,6 +8303,94 @@ function ColecaoScreen({ progress, onExit }) {
 // Monta os dados estruturados do relatório — usado tanto pra montar o texto
 // plano (copiar/enviar) quanto pra renderizar o cartão visual no painel do
 // professor.
+/* =========================================================================
+   RESUMO VISUAL (gráfico de bolhas)
+   Categoriza tópicos por CONTAGEM BRUTA de erros na primeira tentativa (não
+   por percentual) — evita que amostras pequenas (ex: 1 erro em 2 questões)
+   pareçam uma dificuldade grave. Usado no resumo pós-módulo e no relatório
+   visual do aluno.
+   ========================================================================= */
+function categorizarTopicoPorErros(stats) {
+  if (!stats || !stats.tentativas) return null;
+  const temPrimeira = stats.primeiraTentativaAcertos !== null && stats.primeiraTentativaAcertos !== undefined;
+  const acertosP = temPrimeira ? stats.primeiraTentativaAcertos : stats.acertos;
+  const errosP = temPrimeira ? stats.primeiraTentativaErros : stats.erros;
+  if (errosP >= 2) return "trava";
+  if (errosP === 1) return "progresso";
+  if (acertosP > 0) return "domina";
+  return null;
+}
+
+function construirBolhasParaTopicos(topicos, progress) {
+  const grupos = { domina: [], progresso: [], trava: [] };
+  topicos.forEach((t) => {
+    const stats = progress.estatisticasPorTopico[t.id];
+    const cat = categorizarTopicoPorErros(stats);
+    if (!cat) return;
+    const temPrimeira = stats.primeiraTentativaAcertos !== null && stats.primeiraTentativaAcertos !== undefined;
+    const acertosP = temPrimeira ? stats.primeiraTentativaAcertos : stats.acertos;
+    const errosP = temPrimeira ? stats.primeiraTentativaErros : stats.erros;
+    grupos[cat].push({ nome: t.nome, acertos: acertosP, erros: errosP });
+  });
+  return grupos;
+}
+
+function narrativaBolhas(grupos) {
+  const domina = grupos.domina.map((b) => b.nome);
+  const trava = grupos.trava.map((b) => b.nome);
+  if (!domina.length && !trava.length) {
+    return "Ainda não temos dados de primeira tentativa suficientes pra esse resumo — continue praticando!";
+  }
+  const partes = [];
+  if (domina.length) {
+    partes.push(`você já domina ${domina.slice(0, 3).join(", ")}${domina.length > 3 ? " e mais" : ""}`);
+  }
+  if (trava.length) {
+    partes.push(`ainda trava um pouco em ${trava.slice(0, 3).join(", ")}${trava.length > 3 ? " e mais" : ""}`);
+  }
+  const texto = partes.join(", mas ") + ".";
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
+function GraficoBolhas({ grupos }) {
+  const zonas = [
+    { chave: "domina", titulo: "🟢 Você já domina", cor: "#4FA88F", metric: (b) => b.acertos },
+    { chave: "progresso", titulo: "🟡 Quase lá", cor: "#FF8A5B", metric: (b) => b.acertos + b.erros },
+    { chave: "trava", titulo: "🔴 Ainda travando", cor: "#D6336C", metric: (b) => b.erros },
+  ];
+  const temAlgo = zonas.some((z) => (grupos[z.chave] || []).length > 0);
+  if (!temAlgo) return <p className="relatorio-vazio">Ainda sem dados suficientes pra mostrar aqui.</p>;
+  return (
+    <div className="grafico-bolhas">
+      {zonas.map((z) => {
+        const bolhas = grupos[z.chave] || [];
+        if (bolhas.length === 0) return null;
+        return (
+          <div className="bolhas-zona" key={z.chave}>
+            <h4>{z.titulo}</h4>
+            <div className="bolhas-row">
+              {bolhas.map((b) => {
+                const metric = z.metric(b);
+                const diametro = Math.min(96, Math.max(52, 40 + metric * 9));
+                return (
+                  <div
+                    key={b.nome}
+                    className="bolha"
+                    style={{ width: diametro, height: diametro, background: z.cor }}
+                    title={`${b.nome}: ${b.acertos} acertos, ${b.erros} erros na 1ª tentativa`}
+                  >
+                    <span className="bolha-nome">{b.nome}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function construirDadosRelatorio(progress) {
   const topicosDaTurma = topicosParaTurma(progress.turma);
   const desempenho = topicosDaTurma.map((t) => {
@@ -8387,6 +8475,7 @@ function construirDadosRelatorio(progress) {
     conquistasTotal: achievements.length,
     facilidades,
     dificuldades,
+    bolhas: construirBolhasParaTopicos(topicosDaTurma, progress),
     testes,
     testeSupremo: resumoTesteSupremo(progress.testeSupremo),
     testeSupremoFiguras: resumoTesteSupremo(progress.testeSupremoFiguras),
@@ -8616,6 +8705,105 @@ function RelatorioCard({ dados }) {
   );
 }
 
+// Versão visual do relatório, pro próprio aluno: mesmas estatísticas em
+// destaque, mas facilidades/dificuldades viram frase + gráfico de bolhas em
+// vez de listas com barra de %. O painel do professor continua usando o
+// RelatorioCard de lista (mais denso, melhor pra escanear a turma toda).
+function RelatorioCardAluno({ dados }) {
+  return (
+    <div className="relatorio-card">
+      <div className="relatorio-stats-row">
+        <div className="relatorio-stat">
+          <span className="relatorio-stat-num">{dados.xp}</span>
+          <span className="relatorio-stat-label">XP</span>
+        </div>
+        <div className="relatorio-stat">
+          <span className="relatorio-stat-num">
+            {dados.topicosConcluidos}/{dados.topicosTotal}
+          </span>
+          <span className="relatorio-stat-label">tópicos</span>
+        </div>
+        <div className="relatorio-stat">
+          <span className="relatorio-stat-num">
+            {dados.conquistas}/{dados.conquistasTotal}
+          </span>
+          <span className="relatorio-stat-label">selos</span>
+        </div>
+        {dados.pctGeral !== null && (
+          <div className="relatorio-stat">
+            <span className="relatorio-stat-num">{dados.pctGeral}%</span>
+            <span className="relatorio-stat-label">acerto geral</span>
+          </div>
+        )}
+      </div>
+
+      <p className="resumo-narrativa">{narrativaBolhas(dados.bolhas)}</p>
+      <GraficoBolhas grupos={dados.bolhas} />
+
+      {dados.testes.length > 0 && (
+        <div className="relatorio-testes">
+          <h4>📝 Testes finais de módulo</h4>
+          <ul className="relatorio-testes-lista">
+            {dados.testes.map((t) => (
+              <li key={t.moduloNome}>
+                {t.moduloNome}: <strong>{t.acertos}/{t.total}</strong>
+                {t.tentativas > 1 ? ` (${t.tentativas}ª tentativa)` : ""}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {(dados.testeSupremo || dados.testeSupremoFiguras) && (
+        <div className="relatorio-testes relatorio-supremo">
+          <h4>👑 Teste(s) Supremo(s)</h4>
+          <ul className="relatorio-testes-lista">
+            {dados.testeSupremo && (
+              <li>
+                Teste Supremo: <strong>{dados.testeSupremo.acertos}/{dados.testeSupremo.total}</strong>
+                {dados.testeSupremo.tentativas > 1 ? ` (${dados.testeSupremo.tentativas}ª tentativa)` : ""}
+              </li>
+            )}
+            {dados.testeSupremoFiguras && (
+              <li>
+                Teste Supremo de Figuras de Linguagem:{" "}
+                <strong>{dados.testeSupremoFiguras.acertos}/{dados.testeSupremoFiguras.total}</strong>
+                {dados.testeSupremoFiguras.tentativas > 1 ? ` (${dados.testeSupremoFiguras.tentativas}ª tentativa)` : ""}
+              </li>
+            )}
+          </ul>
+        </div>
+      )}
+
+      {dados.modulosZerados.length > 0 && (
+        <div className="relatorio-alerta">
+          ⚠️ Módulos reiniciados por vidas esgotadas:{" "}
+          {dados.modulosZerados
+            .map((m) => `${m.moduloNome} (${new Date(m.data).toLocaleDateString("pt-BR")})`)
+            .join(", ")}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Tela mostrada logo após o placar do teste final de módulo: raio-x visual
+// (frase + bolhas) só dos tópicos daquele módulo que acabou de terminar.
+function ResumoModuloScreen({ moduloNome, grupos, onContinuar }) {
+  return (
+    <div className="screen">
+      <div className="lesson-body resumo-modulo">
+        <div className="topic-tag teste-supremo-tag">📊 Seu raio-x · {moduloNome}</div>
+        <p className="resumo-narrativa resumo-narrativa-grande">{narrativaBolhas(grupos)}</p>
+        <GraficoBolhas grupos={grupos} />
+        <button className="btn-primary" onClick={onContinuar}>
+          Continuar
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function RelatorioScreen({ progress, onExit }) {
   const [copiado, setCopiado] = useState(false);
   const [enviado, setEnviado] = useState(false);
@@ -8659,7 +8847,7 @@ function RelatorioScreen({ progress, onExit }) {
         <h2 className="professor-title">Relatório de progresso</h2>
       </div>
       <div className="lesson-body">
-        <RelatorioCard dados={dados} />
+        <RelatorioCardAluno dados={dados} />
         <button className="btn-primary" onClick={copiar}>
           {copiado ? "Copiado!" : "Copiar relatório"}
         </button>
@@ -9648,7 +9836,7 @@ function App() {
     trocarSenha,
     loaded: customLoaded,
   } = useConteudoProfessor();
-  // trilha | trilhaBonus | teoria | licao | resultado | colecao | relatorio | professorLogin | professorPanel | testeModulo | resultadoTeste
+  // trilha | trilhaBonus | teoria | licao | resultado | colecao | relatorio | professorLogin | professorPanel | testeModulo | resultadoTeste | resumoModulo | testeSupremo | resultadoTesteSupremo
   const [view, setView] = useState("trilha");
   // Lembra se veio da trilha principal ou da trilha bônus, pra voltar pro
   // lugar certo depois de uma lição/teste/coleção/relatório.
@@ -9658,6 +9846,7 @@ function App() {
   const [testeModuloId, setTesteModuloId] = useState(null);
   const [testeQuestoes, setTesteQuestoes] = useState(null);
   const [lastTesteResult, setLastTesteResult] = useState(null);
+  const [resumoModulo, setResumoModulo] = useState(null); // { moduloNome, grupos } — resumo visual pós-teste de módulo
   const [testeSupremoTipo, setTesteSupremoTipo] = useState(null); // "principal" | "figuras"
   const [testeSupremoQuestoes, setTesteSupremoQuestoes] = useState(null);
   const [testeSupremoVidas, setTesteSupremoVidas] = useState(0);
@@ -9875,6 +10064,10 @@ function App() {
     // Envia o relatório automaticamente ao professor com o progresso já atualizado
     enviarRelatorioAoProfessor(next);
     setLastTesteResult({ acertos, total, xpGanho, moduloNome: nomeDoModulo(moduloId) });
+    setResumoModulo({
+      moduloNome: nomeDoModulo(moduloId),
+      grupos: construirBolhasParaTopicos(topicosDoModulo(moduloId), next),
+    });
     setView("resultadoTeste");
   }
 
@@ -9987,6 +10180,13 @@ function App() {
         <ResultadoTesteScreen
           resultado={lastTesteResult}
           onRefazer={() => abrirTesteModulo(testeModuloId)}
+          onContinuar={() => setView(resumoModulo ? "resumoModulo" : origemTrilha)}
+        />
+      )}
+      {view === "resumoModulo" && resumoModulo && (
+        <ResumoModuloScreen
+          moduloNome={resumoModulo.moduloNome}
+          grupos={resumoModulo.grupos}
           onContinuar={() => setView(origemTrilha)}
         />
       )}
@@ -11129,6 +11329,37 @@ const CSS = `
   font-size: 12px;
   color: #7A1D17;
 }
+
+/* Gráfico de bolhas (resumo pós-módulo e relatório visual do aluno) */
+.resumo-modulo { display: flex; flex-direction: column; align-items: stretch; }
+.resumo-narrativa {
+  font-family: 'Fraunces', serif;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--brown);
+  background: rgba(255,255,255,0.5);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin: 0 0 16px;
+}
+.resumo-narrativa-grande { font-size: 17px; text-align: center; }
+.grafico-bolhas { display: flex; flex-direction: column; gap: 18px; margin-bottom: 18px; }
+.bolhas-zona h4 { margin: 0 0 10px; font-size: 12.5px; color: var(--brown); }
+.bolhas-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.bolha {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  text-align: center;
+  padding: 6px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  flex-shrink: 0;
+  cursor: default;
+}
+.bolha-nome { font-size: 10px; font-weight: 700; line-height: 1.15; word-break: break-word; }
+
 .relatorio-texto-bruto {
   margin-top: 12px;
   font-size: 12.5px;
