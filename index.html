@@ -3840,6 +3840,19 @@ const TOPICOS_POR_NIVEL = {
 
 const TODOS_TOPICOS = [...TOPICS, ...TOPICS_NIVEL2, ...TOPICS_NIVEL3, ...TOPICS_NIVEL4];
 
+// Dá um id estável a cada questão-base (id = tópico + posição no array), sem
+// precisar editar as 460 questões uma a uma no código. Isso permite que o
+// painel do professor edite/oculte questões-base individualmente. Importante:
+// esses ids dependem da ORDEM do array — não reordene questões existentes
+// dentro de um tópico depois que o gerenciamento estiver em uso; só adicione
+// no fim. Reordenar faria uma edição/ocultação salva no Firestore "grudar"
+// na questão errada.
+TODOS_TOPICOS.forEach((t) => {
+  t.exercicios.forEach((ex, i) => {
+    if (!ex.id) ex.id = `${t.id}__b${i}`;
+  });
+});
+
 const TOPICO_ID_PARA_NIVEL = {};
 Object.entries(TOPICOS_POR_NIVEL).forEach(([nivelId, topicos]) => {
   topicos.forEach((t) => {
@@ -3850,6 +3863,106 @@ Object.entries(TOPICOS_POR_NIVEL).forEach(([nivelId, topicos]) => {
 function topicosParaTurma(turma) {
   const idsPermitidos = modulosLiberados(turma);
   return TODOS_TOPICOS.filter((t) => idsPermitidos.includes(TOPICO_ID_PARA_NIVEL[t.id]));
+}
+
+/* =========================================================================
+   CONTEÚDO DO PROFESSOR (Firestore): questões extras, edições/ocultação de
+   questões-base, e subtrilhas (ramificações que só aparecem quando têm
+   pelo menos uma questão).
+   ========================================================================= */
+
+function slugify(texto) {
+  return String(texto)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-+|-+$)/g, "");
+}
+
+function gerarIdQuestao() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+  return "q" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+function idSubtrilha(topicId, nome) {
+  return `${topicId}__sub-${slugify(nome)}`;
+}
+
+// Questões-base do tópico já com edições/ocultações do professor aplicadas.
+function exerciciosBaseEfetivos(topic, overridesBase) {
+  return topic.exercicios
+    .map((ex) => {
+      const ov = overridesBase[ex.id];
+      if (!ov) return ex;
+      if (ov.oculta) return null;
+      if (ov.questao) return { ...ov.questao, id: ex.id };
+      return ex;
+    })
+    .filter(Boolean);
+}
+
+// Questões extras do professor pra este tópico, SEM as marcadas com subtrilha
+// (essas pertencem à lição da própria subtrilha, não à lição principal).
+function exerciciosCustomDoTopico(topicId, custom) {
+  return (custom[topicId] || []).filter((q) => !q.subtrilha);
+}
+
+function exerciciosEfetivosDoTopico(topic, custom, overridesBase) {
+  return [...exerciciosBaseEfetivos(topic, overridesBase), ...exerciciosCustomDoTopico(topic.id, custom)];
+}
+
+// Subtrilhas de um tópico que já têm pelo menos 1 questão — só essas aparecem
+// pro aluno na trilha.
+function subtrilhasDoTopico(topicId, subtrilhas, custom) {
+  return Object.values(subtrilhas).filter(
+    (s) => s.topicId === topicId && (custom[topicId] || []).some((q) => q.subtrilha === s.nome)
+  );
+}
+
+// Todas as subtrilhas cadastradas pra um tópico, mesmo sem questão ainda —
+// usado no painel do professor pra escolher "adicionar a uma subtrilha
+// existente" sem duplicar o cadastro.
+function subtrilhasDoTopicoTodas(topicId, subtrilhas) {
+  return Object.values(subtrilhas).filter((s) => s.topicId === topicId);
+}
+
+function exerciciosDaSubtrilha(sub, custom) {
+  return (custom[sub.topicId] || []).filter((q) => q.subtrilha === sub.nome);
+}
+
+// Monta um objeto "tópico" sintético pra uma subtrilha, pra poder reusar toda
+// a mecânica existente de teoria/lição/progresso sem duplicar código.
+function topicoParaSubtrilha(sub, custom, corPai) {
+  return {
+    id: sub.id,
+    nome: sub.nome,
+    cor: corPai,
+    dica: sub.dica || `Praticando: ${sub.nome}`,
+    teoria: sub.teoria || "",
+    exercicios: exerciciosDaSubtrilha(sub, custom),
+    _subtrilha: true,
+    _topicPaiId: sub.topicId,
+  };
+}
+
+// Resolve um id de tópico OU de subtrilha pro objeto "tópico" correspondente.
+function resolverTopico(id, custom, subtrilhas) {
+  const base = TODOS_TOPICOS.find((t) => t.id === id);
+  if (base) return base;
+  const sub = subtrilhas[id];
+  if (sub) {
+    const pai = TODOS_TOPICOS.find((t) => t.id === sub.topicId);
+    return topicoParaSubtrilha(sub, custom, pai ? pai.cor : "#813017");
+  }
+  return null;
+}
+
+function moduloIdDoTopicoOuSubtrilha(id, subtrilhas) {
+  if (TOPICO_ID_PARA_NIVEL[id] !== undefined) return TOPICO_ID_PARA_NIVEL[id];
+  const sub = subtrilhas[id];
+  if (sub) return TOPICO_ID_PARA_NIVEL[sub.topicId];
+  return null;
 }
 
 /* =========================================================================
@@ -3891,11 +4004,11 @@ function ehPrimeiraTentativaTopico(progress, topicId) {
    ========================================================================= */
 const TAMANHO_TESTE_MODULO = 10;
 
-function gerarQuestoesTesteModulo(moduloId, custom, tamanho = TAMANHO_TESTE_MODULO) {
+function gerarQuestoesTesteModulo(moduloId, custom, overridesBase, tamanho = TAMANHO_TESTE_MODULO) {
   const topicos = topicosDoModulo(moduloId);
   const filas = embaralhar(topicos).map((t) => ({
     topicId: t.id,
-    fila: embaralhar([...t.exercicios, ...((custom && custom[t.id]) || [])]),
+    fila: embaralhar(exerciciosEfetivosDoTopico(t, custom, overridesBase)),
   }));
   const selecionadas = [];
   let rodada = 0;
@@ -4301,50 +4414,109 @@ function useProgress() {
   return { progress, save, loaded, trocarAluno, identificarAluno };
 }
 
-const PROFESSOR_STORAGE_KEY = "perguntas-custom-professor";
+const PROFESSOR_STORAGE_KEY = "perguntas-custom-professor"; // { [topicId]: [questão, ...] }
+const OVERRIDES_BASE_KEY = "overrides-questoes-base"; // { [baseQuestionId]: { oculta, questao } }
+const SUBTRILHAS_KEY = "subtrilhas-professor"; // { [subId]: { id, topicId, nome, teoria, dica } }
+const CONFIG_PROFESSOR_KEY = "config-professor"; // { senhaHash }
 
-// A senha real não fica em texto puro no código — fica só o "hash" dela.
-// Para trocar a senha: abra o console do navegador (F12) nesta página e rode
-//   await sha256("sua-nova-senha")
-// e cole o resultado abaixo, substituindo o valor de PROFESSOR_PIN_HASH.
-// Senha atual: "professor-gramatica-26"
-const PROFESSOR_PIN_HASH = "2dcef18c1690834c7bdd0d0fb8eecc8c04ec573728c54863c649f09e513831ec";
+// A senha real não fica em texto puro no código — fica só o "hash" dela. Esse
+// valor é usado só como fallback ANTES da primeira vez que o professor troca
+// a senha pelo painel (a partir daí, o hash real mora no Firestore, em
+// config-professor, e este valor fixo deixa de ser usado).
+const PROFESSOR_PIN_HASH_FALLBACK = "2dcef18c1690834c7bdd0d0fb8eecc8c04ec573728c54863c649f09e513831ec";
 
 async function sha256(texto) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(texto));
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
-if (typeof window !== "undefined") window.sha256 = sha256; // disponível no console para trocar a senha
+if (typeof window !== "undefined") window.sha256 = sha256; // disponível no console, se precisar
 
 const LOGIN_MAX_TENTATIVAS = 5;
 const LOGIN_BLOQUEIO_MS = 30000;
 
-function useCustomQuestions() {
+async function safeGetJSON(key) {
+  try {
+    const res = await window.storage.get(key, true);
+    return res && res.value ? JSON.parse(res.value) : null;
+  } catch {
+    return null;
+  }
+}
+
+// Todo o conteúdo editável pelo professor: perguntas extras, edições/ocultação
+// de questões-base, subtrilhas e a senha de acesso — tudo no Firestore,
+// refletindo pra todo mundo assim que salvo (sem precisar republicar o app).
+function useConteudoProfessor() {
   const [custom, setCustom] = useState({});
+  const [overridesBase, setOverridesBase] = useState({});
+  const [subtrilhas, setSubtrilhas] = useState({});
+  const [senhaHash, setSenhaHash] = useState(PROFESSOR_PIN_HASH_FALLBACK);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     (async () => {
-      try {
-        const res = await window.storage.get(PROFESSOR_STORAGE_KEY, true);
-        setCustom(res ? JSON.parse(res.value) : {});
-      } catch {
-        setCustom({});
-      }
+      const [c, o, s, cfg] = await Promise.all([
+        safeGetJSON(PROFESSOR_STORAGE_KEY),
+        safeGetJSON(OVERRIDES_BASE_KEY),
+        safeGetJSON(SUBTRILHAS_KEY),
+        safeGetJSON(CONFIG_PROFESSOR_KEY),
+      ]);
+      setCustom(c || {});
+      setOverridesBase(o || {});
+      setSubtrilhas(s || {});
+      if (cfg && cfg.senhaHash) setSenhaHash(cfg.senhaHash);
       setLoaded(true);
     })();
   }, []);
 
-  const save = useCallback(async (next) => {
+  const saveCustom = useCallback(async (next) => {
     setCustom(next);
     try {
       await window.storage.set(PROFESSOR_STORAGE_KEY, JSON.stringify(next), true);
     } catch {
-      /* silencioso: pergunta ainda fica disponível nesta sessão */
+      /* silencioso: fica disponível nesta sessão */
     }
   }, []);
 
-  return { custom, save, loaded };
+  const saveOverridesBase = useCallback(async (next) => {
+    setOverridesBase(next);
+    try {
+      await window.storage.set(OVERRIDES_BASE_KEY, JSON.stringify(next), true);
+    } catch {
+      /* silencioso */
+    }
+  }, []);
+
+  const saveSubtrilhas = useCallback(async (next) => {
+    setSubtrilhas(next);
+    try {
+      await window.storage.set(SUBTRILHAS_KEY, JSON.stringify(next), true);
+    } catch {
+      /* silencioso */
+    }
+  }, []);
+
+  const trocarSenha = useCallback(async (novoHash) => {
+    setSenhaHash(novoHash);
+    try {
+      await window.storage.set(CONFIG_PROFESSOR_KEY, JSON.stringify({ senhaHash: novoHash }), true);
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  return {
+    custom,
+    saveCustom,
+    overridesBase,
+    saveOverridesBase,
+    subtrilhas,
+    saveSubtrilhas,
+    senhaHash,
+    trocarSenha,
+    loaded,
+  };
 }
 
 /* =========================================================================
@@ -4946,7 +5118,17 @@ function ResultadoTesteScreen({ resultado, onRefazer, onContinuar }) {
    TRILHA (MAPA DE NÍVEIS)
    ========================================================================= */
 
-function Trilha({ progress, onOpenTopic, onOpenProfessor, onOpenColecao, onOpenRelatorio, onTrocarAluno, onAbrirTeste }) {
+function Trilha({
+  progress,
+  onOpenTopic,
+  onOpenProfessor,
+  onOpenColecao,
+  onOpenRelatorio,
+  onTrocarAluno,
+  onAbrirTeste,
+  subtrilhas,
+  custom,
+}) {
   const achievements = achievementsParaTurma(progress.turma);
   const conquistas = achievements.filter((a) => a.condicao(progress)).length;
   const idsPermitidos = modulosLiberados(progress.turma);
@@ -5021,12 +5203,12 @@ function Trilha({ progress, onOpenTopic, onOpenProfessor, onOpenColecao, onOpenR
             </div>
 
             <div className="node-path">
-              {topicosDoNivel.map((t, i) => {
+              {topicosDoNivel.flatMap((t, i) => {
                 const prevDone =
                   i === 0 ? nivelAnteriorCompleto : progress.concluidos.includes(topicosDoNivel[i - 1].id);
                 const done = progress.concluidos.includes(t.id);
                 const locked = !prevDone && !done;
-                return (
+                const linhas = [
                   <div className="node-row" key={t.id}>
                     <button
                       className={
@@ -5041,8 +5223,31 @@ function Trilha({ progress, onOpenTopic, onOpenProfessor, onOpenColecao, onOpenR
                       {done ? "✓" : locked ? "🔒" : i + 1}
                     </button>
                     <span className="node-name">{t.nome}</span>
-                  </div>
-                );
+                  </div>,
+                ];
+                // Subtrilhas (ramificações) do tópico — só aparecem depois que
+                // o professor adiciona ao menos 1 questão a elas, e ficam
+                // recuadas logo abaixo do tópico-pai. Desbloqueiam junto com ele.
+                subtrilhasDoTopico(t.id, subtrilhas, custom).forEach((s) => {
+                  const subDone = progress.concluidos.includes(s.id);
+                  const subLocked = !done && !subDone;
+                  linhas.push(
+                    <div className="node-row node-row-sub" key={s.id}>
+                      <button
+                        className={
+                          "node node-sub" + (subDone ? " node-done" : "") + (subLocked ? " node-locked" : "")
+                        }
+                        style={{ background: subLocked ? undefined : t.cor }}
+                        disabled={subLocked}
+                        onClick={() => onOpenTopic({ id: s.id })}
+                      >
+                        {subDone ? "✓" : subLocked ? "🔒" : "↳"}
+                      </button>
+                      <span className="node-name">{s.nome}</span>
+                    </div>
+                  );
+                });
+                return linhas;
               })}
               {(() => {
                 const topicosCompletos = topicosDoNivel.every((t) => progress.concluidos.includes(t.id));
@@ -5503,7 +5708,7 @@ function RelatorioScreen({ progress, onExit }) {
    ÁREA DO PROFESSOR
    ========================================================================= */
 
-function ProfessorLogin({ onSuccess, onExit }) {
+function ProfessorLogin({ onSuccess, onExit, senhaHash }) {
   const [pin, setPin] = useState("");
   const [erro, setErro] = useState(false);
   const [verificando, setVerificando] = useState(false);
@@ -5525,7 +5730,7 @@ function ProfessorLogin({ onSuccess, onExit }) {
     setVerificando(true);
     const hash = await sha256(pin);
     setVerificando(false);
-    if (hash === PROFESSOR_PIN_HASH) {
+    if (hash === senhaHash) {
       onSuccess();
       return;
     }
@@ -5580,7 +5785,17 @@ const TIPO_LABELS = {
   dragdrop: "Arrastar e soltar",
 };
 
-function ProfessorPanel({ custom, onSave, onExit }) {
+function ProfessorPanel({
+  custom,
+  saveCustom,
+  overridesBase,
+  saveOverridesBase,
+  subtrilhas,
+  saveSubtrilhas,
+  senhaHash,
+  trocarSenha,
+  onExit,
+}) {
   const [aba, setAba] = useState("perguntas");
   const [relatorios, setRelatorios] = useState([]);
   const [carregandoRelatorios, setCarregandoRelatorios] = useState(false);
@@ -5638,6 +5853,17 @@ function ProfessorPanel({ custom, onSave, onExit }) {
   const [savedMsg, setSavedMsg] = useState(false);
   const [erro, setErro] = useState("");
 
+  // Edição: qual questão está sendo editada (null = criando uma nova).
+  // origem: "base" (uma das 460 do código) ou "custom" (criada pelo professor).
+  const [editando, setEditando] = useState(null); // { id, origem } | null
+
+  // Subtrilha selecionada pra nova pergunta: "" = nenhuma (vai direto pro
+  // tópico), "__nova__" = criar uma subtrilha nova, ou o nome de uma existente.
+  const [subtrilhaSelecionada, setSubtrilhaSelecionada] = useState("");
+  const [novaSubtrilhaNome, setNovaSubtrilhaNome] = useState("");
+  const [novaSubtrilhaTeoria, setNovaSubtrilhaTeoria] = useState("");
+  const [novaSubtrilhaDica, setNovaSubtrilhaDica] = useState("");
+
   // campos mcq / fillblank
   const [prompt, setPrompt] = useState("");
   const [sentenca, setSentenca] = useState(""); // usada em fillblank (com ____)
@@ -5658,8 +5884,22 @@ function ProfessorPanel({ custom, onSave, onExit }) {
     { word: "", bucket: "B" },
   ]);
 
+  // Troca de senha
+  const [novaSenha, setNovaSenha] = useState("");
+  const [confirmaSenha, setConfirmaSenha] = useState("");
+  const [senhaMsg, setSenhaMsg] = useState("");
+  const [senhaErro, setSenhaErro] = useState("");
+  const [trocandoSenha, setTrocandoSenha] = useState(false);
+
   const topicoAtual = TODOS_TOPICOS.find((t) => t.id === topicId);
-  const perguntasDoTopico = custom[topicId] || [];
+  const questoesBase = topicoAtual ? topicoAtual.exercicios : [];
+  const perguntasDoTopicoTodas = custom[topicId] || [];
+  const perguntasSemSubtrilha = perguntasDoTopicoTodas.filter((q) => !q.subtrilha);
+  const subtrilhasExistentesDoTopico = subtrilhasDoTopicoTodas(topicId, subtrilhas);
+  const perguntasDaSubtrilhaSelecionada =
+    subtrilhaSelecionada && subtrilhaSelecionada !== "__nova__"
+      ? perguntasDoTopicoTodas.filter((q) => q.subtrilha === subtrilhaSelecionada)
+      : [];
   const palavrasClassify = fraseClassify.trim() ? fraseClassify.trim().split(/\s+/) : [];
 
   function atualizarOpt(i, v) {
@@ -5698,6 +5938,44 @@ function ProfessorPanel({ custom, onSave, onExit }) {
       { word: "", bucket: "B" },
     ]);
     setErro("");
+    setEditando(null);
+    setSubtrilhaSelecionada("");
+    setNovaSubtrilhaNome("");
+    setNovaSubtrilhaTeoria("");
+    setNovaSubtrilhaDica("");
+  }
+
+  // Carrega uma questão existente (base ou do professor) de volta no
+  // formulário, pra edição.
+  function carregarParaEdicao(q, origem) {
+    setEditando({ id: q.id, origem });
+    setErro("");
+    setTipo(q.type);
+    setPrompt(q.prompt || "");
+    setSubtrilhaSelecionada(q.subtrilha || "");
+    if (q.type === "mcq" || q.type === "fillblank") {
+      const opcoes = [...(q.options || [])];
+      while (opcoes.length < 4) opcoes.push("");
+      setOpts(opcoes.slice(0, Math.max(4, opcoes.length)));
+      const idxCorreto = (q.options || []).indexOf(q.correct);
+      setCorrectIdx(idxCorreto >= 0 ? idxCorreto : 0);
+      if (q.type === "fillblank") setSentenca(q.sentence || "");
+    } else if (q.type === "classify") {
+      const palavras = q.words || [];
+      setFraseClassify(palavras.join(" "));
+      const corretos = Array.isArray(q.correct) ? q.correct : [q.correct];
+      setCorretosClassify(
+        palavras.map((w, i) => (corretos.includes(w) ? i : null)).filter((x) => x !== null)
+      );
+    } else if (q.type === "dragdrop") {
+      const buckets = q.buckets || ["", ""];
+      setBucketA(buckets[0] || "");
+      setBucketB(buckets[1] || "");
+      setItensDrag(
+        (q.items || []).map((it) => ({ word: it.word, bucket: it.bucket === buckets[1] ? "B" : "A" }))
+      );
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function salvar() {
@@ -5757,22 +6035,97 @@ function ProfessorPanel({ custom, onSave, onExit }) {
 
     if (!novaPergunta) return;
 
-    const next = {
-      ...custom,
-      [topicId]: [...(custom[topicId] || []), novaPergunta],
-    };
-    onSave(next);
+    // Resolve a subtrilha: nenhuma, uma existente, ou criar uma nova agora.
+    let subtrilhaNomeFinal = null;
+    if (subtrilhaSelecionada === "__nova__") {
+      if (!novaSubtrilhaNome.trim()) {
+        setErro("Dê um nome pra nova subtrilha.");
+        return;
+      }
+      subtrilhaNomeFinal = novaSubtrilhaNome.trim();
+      const subId = idSubtrilha(topicId, subtrilhaNomeFinal);
+      const jaExiste = !!subtrilhas[subId];
+      if (!jaExiste) {
+        saveSubtrilhas({
+          ...subtrilhas,
+          [subId]: {
+            id: subId,
+            topicId,
+            nome: subtrilhaNomeFinal,
+            teoria: novaSubtrilhaTeoria.trim(),
+            dica: novaSubtrilhaDica.trim(),
+          },
+        });
+      }
+    } else if (subtrilhaSelecionada) {
+      subtrilhaNomeFinal = subtrilhaSelecionada;
+    }
+    novaPergunta.subtrilha = subtrilhaNomeFinal;
+
+    if (editando && editando.origem === "base") {
+      // Substitui o conteúdo da questão-base (mantém o id original).
+      saveOverridesBase({
+        ...overridesBase,
+        [editando.id]: { oculta: false, questao: novaPergunta },
+      });
+    } else if (editando && editando.origem === "custom") {
+      novaPergunta.id = editando.id;
+      saveCustom({
+        ...custom,
+        [topicId]: perguntasDoTopicoTodas.map((q) => (q.id === editando.id ? novaPergunta : q)),
+      });
+    } else {
+      novaPergunta.id = gerarIdQuestao();
+      saveCustom({
+        ...custom,
+        [topicId]: [...perguntasDoTopicoTodas, novaPergunta],
+      });
+    }
+
     limpar();
     setSavedMsg(true);
     setTimeout(() => setSavedMsg(false), 2000);
   }
 
-  function remover(i) {
-    const next = {
+  function removerCustom(id) {
+    saveCustom({
       ...custom,
-      [topicId]: perguntasDoTopico.filter((_, idx) => idx !== i),
-    };
-    onSave(next);
+      [topicId]: perguntasDoTopicoTodas.filter((q) => q.id !== id),
+    });
+    if (editando && editando.id === id) limpar();
+  }
+
+  // Oculta ou reexibe uma questão-base sem precisar abrir o formulário.
+  function alternarOcultaBase(baseId) {
+    const atual = overridesBase[baseId];
+    saveOverridesBase({
+      ...overridesBase,
+      [baseId]: { ...(atual || {}), oculta: !(atual && atual.oculta) },
+    });
+  }
+
+  async function salvarNovaSenha() {
+    setSenhaErro("");
+    setSenhaMsg("");
+    if (novaSenha.length < 6) {
+      setSenhaErro("A senha precisa ter pelo menos 6 caracteres.");
+      return;
+    }
+    if (novaSenha !== confirmaSenha) {
+      setSenhaErro("As duas senhas digitadas são diferentes.");
+      return;
+    }
+    setTrocandoSenha(true);
+    const hash = await sha256(novaSenha);
+    const ok = await trocarSenha(hash);
+    setTrocandoSenha(false);
+    if (ok) {
+      setSenhaMsg("Senha atualizada.");
+      setNovaSenha("");
+      setConfirmaSenha("");
+    } else {
+      setSenhaErro("Não foi possível salvar a nova senha agora. Tente de novo.");
+    }
   }
 
   return (
@@ -5797,7 +6150,44 @@ function ProfessorPanel({ custom, onSave, onExit }) {
         >
           Relatórios dos alunos
         </button>
+        <button
+          className={"tab-btn" + (aba === "config" ? " tab-btn-ativo" : "")}
+          onClick={() => setAba("config")}
+        >
+          Configurações
+        </button>
       </div>
+
+      {aba === "config" && (
+        <div className="lesson-body">
+          <label className="prof-label">Nova senha do professor</label>
+          <input
+            className="prof-input"
+            type="password"
+            value={novaSenha}
+            onChange={(e) => setNovaSenha(e.target.value)}
+            placeholder="Mínimo 6 caracteres"
+          />
+          <label className="prof-label">Confirmar nova senha</label>
+          <input
+            className="prof-input"
+            type="password"
+            value={confirmaSenha}
+            onChange={(e) => setConfirmaSenha(e.target.value)}
+            placeholder="Repita a nova senha"
+          />
+          {senhaErro && <p className="pin-erro">{senhaErro}</p>}
+          {senhaMsg && <p className="prof-saved">{senhaMsg}</p>}
+          <button className="btn-primary" onClick={salvarNovaSenha} disabled={trocandoSenha}>
+            {trocandoSenha ? "Salvando…" : "Salvar nova senha"}
+          </button>
+          <p className="config-aviso">
+            ⚠️ Essa senha protege só por conveniência (evita que alunos mexam no banco de questões por acidente).
+            Como o app roda inteiro no navegador, não é uma trava de segurança forte — alguém com conhecimento
+            técnico ainda conseguiria contornar a tela de login.
+          </p>
+        </div>
+      )}
 
       {aba === "relatorios" && (
         <div className="lesson-body">
@@ -5937,14 +6327,71 @@ function ProfessorPanel({ custom, onSave, onExit }) {
 
       {aba === "perguntas" && (
       <div className="lesson-body">
+        {editando && (
+          <div className="prof-editando-aviso">
+            ✏️ Editando {editando.origem === "base" ? "uma questão-base" : "uma questão do professor"}.
+            <button className="btn-cancelar-edicao" onClick={limpar}>
+              cancelar edição
+            </button>
+          </div>
+        )}
+
         <label className="prof-label">Tópico</label>
-        <select className="prof-select" value={topicId} onChange={(e) => setTopicId(e.target.value)}>
+        <select
+          className="prof-select"
+          value={topicId}
+          onChange={(e) => {
+            setTopicId(e.target.value);
+            limpar();
+          }}
+        >
           {TODOS_TOPICOS.map((t) => (
             <option key={t.id} value={t.id}>
               {t.nome}
             </option>
           ))}
         </select>
+
+        <label className="prof-label">Subtrilha (opcional — ramificação extra dentro do tópico)</label>
+        <select
+          className="prof-select"
+          value={subtrilhaSelecionada}
+          onChange={(e) => setSubtrilhaSelecionada(e.target.value)}
+        >
+          <option value="">Nenhuma — pergunta entra direto no tópico</option>
+          {subtrilhasExistentesDoTopico.map((s) => (
+            <option key={s.id} value={s.nome}>
+              {s.nome}
+            </option>
+          ))}
+          <option value="__nova__">+ Criar nova subtrilha…</option>
+        </select>
+
+        {subtrilhaSelecionada === "__nova__" && (
+          <div className="prof-subtrilha-nova">
+            <label className="prof-label">Nome da subtrilha</label>
+            <input
+              className="prof-input"
+              value={novaSubtrilhaNome}
+              onChange={(e) => setNovaSubtrilhaNome(e.target.value)}
+              placeholder="Ex: Modos e Tempos"
+            />
+            <label className="prof-label">Teoria curta (aparece antes da primeira lição)</label>
+            <textarea
+              className="prof-input prof-textarea"
+              value={novaSubtrilhaTeoria}
+              onChange={(e) => setNovaSubtrilhaTeoria(e.target.value)}
+              placeholder="Explicação curta sobre o que essa subtrilha ensina"
+            />
+            <label className="prof-label">Dica curta</label>
+            <input
+              className="prof-input"
+              value={novaSubtrilhaDica}
+              onChange={(e) => setNovaSubtrilhaDica(e.target.value)}
+              placeholder="Ex: Preste atenção na terminação do verbo."
+            />
+          </div>
+        )}
 
         <label className="prof-label">Tipo de exercício</label>
         <div className="tipo-grid">
@@ -6096,26 +6543,115 @@ function ProfessorPanel({ custom, onSave, onExit }) {
         {erro && <p className="pin-erro">{erro}</p>}
 
         <button className="btn-primary" onClick={salvar}>
-          Salvar pergunta
+          {editando ? "Salvar edição" : "Salvar pergunta"}
         </button>
-        {savedMsg && <p className="prof-saved">Pergunta adicionada para todos os jogadores.</p>}
+        {savedMsg && (
+          <p className="prof-saved">
+            {editando ? "Alterações salvas para todos os jogadores." : "Pergunta adicionada para todos os jogadores."}
+          </p>
+        )}
 
-        {perguntasDoTopico.length > 0 && (
+        {/* Lista de questões — muda conforme a subtrilha selecionada acima */}
+        {subtrilhaSelecionada && subtrilhaSelecionada !== "__nova__" ? (
           <div className="prof-list">
             <div className="prof-list-title">
-              Perguntas adicionadas em {topicoAtual.nome} ({perguntasDoTopico.length})
+              Perguntas em "{subtrilhaSelecionada}" ({perguntasDaSubtrilhaSelecionada.length})
             </div>
-            {perguntasDoTopico.map((p, i) => (
-              <div className="prof-list-item" key={i}>
+            {perguntasDaSubtrilhaSelecionada.length === 0 && (
+              <p className="prof-list-vazio">Nenhuma pergunta ainda — a subtrilha só aparece pro aluno depois da primeira.</p>
+            )}
+            {perguntasDaSubtrilhaSelecionada.map((p) => (
+              <div className="prof-list-item" key={p.id}>
                 <span>
                   <span className="prof-list-tipo">{TIPO_LABELS[p.type]}</span> {p.prompt}
                 </span>
-                <button className="btn-remover" onClick={() => remover(i)}>
-                  remover
-                </button>
+                <span className="prof-list-acoes">
+                  <button className="btn-editar" onClick={() => carregarParaEdicao(p, "custom")}>
+                    editar
+                  </button>
+                  <button className="btn-remover" onClick={() => removerCustom(p.id)}>
+                    remover
+                  </button>
+                </span>
               </div>
             ))}
           </div>
+        ) : (
+          <>
+            {questoesBase.length > 0 && (
+              <div className="prof-list">
+                <div className="prof-list-title">
+                  Questões-base de {topicoAtual.nome} ({questoesBase.length})
+                </div>
+                {questoesBase.map((q) => {
+                  const ov = overridesBase[q.id];
+                  const oculta = !!(ov && ov.oculta);
+                  const editada = !!(ov && ov.questao);
+                  const efetiva = editada ? { ...ov.questao, id: q.id } : q;
+                  return (
+                    <div className={"prof-list-item" + (oculta ? " prof-list-item-oculta" : "")} key={q.id}>
+                      <span>
+                        <span className="prof-list-tipo">{TIPO_LABELS[efetiva.type]}</span> {efetiva.prompt}
+                        {oculta && <span className="prof-badge-oculta">oculta</span>}
+                        {editada && !oculta && <span className="prof-badge-editada">editada</span>}
+                      </span>
+                      <span className="prof-list-acoes">
+                        <button className="btn-editar" onClick={() => carregarParaEdicao(efetiva, "base")}>
+                          editar
+                        </button>
+                        <button className="btn-remover" onClick={() => alternarOcultaBase(q.id)}>
+                          {oculta ? "reexibir" : "ocultar"}
+                        </button>
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {perguntasSemSubtrilha.length > 0 && (
+              <div className="prof-list">
+                <div className="prof-list-title">
+                  Perguntas do professor em {topicoAtual.nome} ({perguntasSemSubtrilha.length})
+                </div>
+                {perguntasSemSubtrilha.map((p) => (
+                  <div className="prof-list-item" key={p.id}>
+                    <span>
+                      <span className="prof-list-tipo">{TIPO_LABELS[p.type]}</span> {p.prompt}
+                    </span>
+                    <span className="prof-list-acoes">
+                      <button className="btn-editar" onClick={() => carregarParaEdicao(p, "custom")}>
+                        editar
+                      </button>
+                      <button className="btn-remover" onClick={() => removerCustom(p.id)}>
+                        remover
+                      </button>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {subtrilhasExistentesDoTopico.length > 0 && (
+              <div className="prof-list">
+                <div className="prof-list-title">Subtrilhas deste tópico</div>
+                {subtrilhasExistentesDoTopico.map((s) => {
+                  const n = (custom[topicId] || []).filter((q) => q.subtrilha === s.nome).length;
+                  return (
+                    <div className="prof-list-item" key={s.id}>
+                      <span>
+                        {s.nome} <span className="prof-list-tipo">{n} pergunta{n === 1 ? "" : "s"}</span>
+                        {n === 0 && <span className="prof-badge-oculta">ainda não aparece pro aluno</span>}
+                      </span>
+                      <button className="btn-editar" onClick={() => setSubtrilhaSelecionada(s.nome)}>
+                        ver perguntas
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
         )}
       </div>
       )}
@@ -6129,7 +6665,17 @@ function ProfessorPanel({ custom, onSave, onExit }) {
 
 function App() {
   const { progress, save, loaded, trocarAluno, identificarAluno } = useProgress();
-  const { custom, save: saveCustom, loaded: customLoaded } = useCustomQuestions();
+  const {
+    custom,
+    saveCustom,
+    overridesBase,
+    saveOverridesBase,
+    subtrilhas,
+    saveSubtrilhas,
+    senhaHash,
+    trocarSenha,
+    loaded: customLoaded,
+  } = useConteudoProfessor();
   // trilha | teoria | licao | resultado | colecao | relatorio | professorLogin | professorPanel | testeModulo | resultadoTeste
   const [view, setView] = useState("trilha");
   const [selectedTopicId, setSelectedTopicId] = useState(null);
@@ -6215,11 +6761,13 @@ function App() {
     );
   }
 
-  const baseTopic = selectedTopicId ? TODOS_TOPICOS.find((t) => t.id === selectedTopicId) : null;
+  const baseTopic = selectedTopicId ? resolverTopico(selectedTopicId, custom, subtrilhas) : null;
   const activeTopic = baseTopic
-    ? { ...baseTopic, exercicios: [...baseTopic.exercicios, ...(custom[baseTopic.id] || [])] }
+    ? baseTopic._subtrilha
+      ? baseTopic // exercícios da subtrilha já vêm resolvidos por resolverTopico
+      : { ...baseTopic, exercicios: exerciciosEfetivosDoTopico(baseTopic, custom, overridesBase) }
     : null;
-  const moduloAtivoId = baseTopic ? TOPICO_ID_PARA_NIVEL[baseTopic.id] : null;
+  const moduloAtivoId = baseTopic ? moduloIdDoTopicoOuSubtrilha(baseTopic.id, subtrilhas) : null;
   const vidasModuloAtivo = moduloAtivoId ? vidasRestantesModulo(progress, moduloAtivoId) : VIDAS_POR_MODULO;
   const primeiraTentativaAtiva = baseTopic ? ehPrimeiraTentativaTopico(progress, baseTopic.id) : true;
 
@@ -6315,7 +6863,7 @@ function App() {
   }
 
   function abrirTesteModulo(moduloId) {
-    const questoes = gerarQuestoesTesteModulo(moduloId, custom, TAMANHO_TESTE_MODULO);
+    const questoes = gerarQuestoesTesteModulo(moduloId, custom, overridesBase, TAMANHO_TESTE_MODULO);
     setTesteModuloId(moduloId);
     setTesteQuestoes(questoes);
     setView("testeModulo");
@@ -6359,6 +6907,8 @@ function App() {
           onOpenRelatorio={() => setView("relatorio")}
           onTrocarAluno={trocarAluno}
           onAbrirTeste={abrirTesteModulo}
+          subtrilhas={subtrilhas}
+          custom={custom}
         />
       )}
       {view === "teoria" && baseTopic && (
@@ -6405,10 +6955,21 @@ function App() {
         <ProfessorLogin
           onSuccess={() => setView("professorPanel")}
           onExit={() => setView("trilha")}
+          senhaHash={senhaHash}
         />
       )}
       {view === "professorPanel" && (
-        <ProfessorPanel custom={custom} onSave={saveCustom} onExit={() => setView("trilha")} />
+        <ProfessorPanel
+          custom={custom}
+          saveCustom={saveCustom}
+          overridesBase={overridesBase}
+          saveOverridesBase={saveOverridesBase}
+          subtrilhas={subtrilhas}
+          saveSubtrilhas={saveSubtrilhas}
+          senhaHash={senhaHash}
+          trocarSenha={trocarSenha}
+          onExit={() => setView("trilha")}
+        />
       )}
       {filaConquistas.length > 0 && <ConquistaToast key={filaConquistas[0].id} conquista={filaConquistas[0]} />}
     </div>
@@ -6654,6 +7215,14 @@ const CSS = `
 .node-name { font-weight: 600; font-size: 14.5px; color: var(--brown); }
 .node-row-teste { margin-top: 2px; }
 .node-teste { border-style: dashed; }
+.node-row-sub { margin-left: 26px; }
+.node-sub {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  font-size: 13px;
+}
+.node-row-sub .node-name { font-size: 13px; color: rgba(129,48,23,0.85); }
 
 .nivel-locked-card {
   border-radius: 16px;
@@ -7062,6 +7631,66 @@ const CSS = `
   cursor: pointer;
   text-decoration: underline;
   white-space: nowrap;
+}
+.btn-editar {
+  border: none;
+  background: none;
+  color: #4A4E8B;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+.prof-list-acoes { display: flex; gap: 10px; flex-shrink: 0; }
+.prof-list-vazio { font-size: 12.5px; color: rgba(129,48,23,0.55); }
+.prof-list-item-oculta { opacity: 0.55; }
+.prof-badge-oculta {
+  margin-left: 8px;
+  font-size: 10px;
+  background: rgba(179,38,30,0.12);
+  color: #B3261E;
+  padding: 1px 7px;
+  border-radius: 999px;
+}
+.prof-badge-editada {
+  margin-left: 8px;
+  font-size: 10px;
+  background: rgba(74,78,139,0.12);
+  color: #4A4E8B;
+  padding: 1px 7px;
+  border-radius: 999px;
+}
+.prof-editando-aviso {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(74,78,139,0.12);
+  border: 1px solid rgba(74,78,139,0.3);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #4A4E8B;
+  margin-bottom: 14px;
+}
+.btn-cancelar-edicao {
+  border: none;
+  background: none;
+  color: #4A4E8B;
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.prof-subtrilha-nova {
+  border-left: 3px solid var(--pink);
+  padding-left: 12px;
+  margin: 4px 0 10px;
+}
+.prof-textarea { resize: vertical; min-height: 70px; font-family: inherit; }
+.config-aviso {
+  font-size: 12px;
+  color: rgba(129,48,23,0.65);
+  margin-top: 14px;
+  line-height: 1.5;
 }
 
 .tipo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
