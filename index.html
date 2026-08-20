@@ -8352,41 +8352,81 @@ function narrativaBolhas(grupos) {
   return texto.charAt(0).toUpperCase() + texto.slice(1);
 }
 
+// Gera uma posição pseudo-aleatória, mas ESTÁVEL (mesma bolha sempre cai no
+// mesmo lugar dentro de uma mesma sessão de dados), a partir do nome do
+// tópico — evita que o mapa "pule" a cada re-render. Em % pra ser responsivo
+// (não depende de largura fixa do container).
+function posicaoEstavel(seed) {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  const rx = (h % 1000) / 1000;
+  const ry = (((h >>> 10) % 1000) / 1000);
+  return {
+    left: 14 + rx * 72, // 14% a 86%
+    top: 16 + ry * 68, // 16% a 84%
+  };
+}
+
+// Painel único tipo "mapa": todas as bolhas (domina/progresso/trava)
+// espalhadas e sobrepostas juntas, coloridas por categoria, tamanho pela
+// quantidade de acertos+erros. Sem nome visível — só o número dentro; o
+// aluno clica pra ver de qual tópico se trata.
 function GraficoBolhas({ grupos }) {
-  const zonas = [
-    { chave: "domina", titulo: "🟢 Você já domina", cor: "#4FA88F", metric: (b) => b.acertos },
-    { chave: "progresso", titulo: "🟡 Quase lá", cor: "#FF8A5B", metric: (b) => b.acertos + b.erros },
-    { chave: "trava", titulo: "🔴 Ainda travando", cor: "#D6336C", metric: (b) => b.erros },
-  ];
-  const temAlgo = zonas.some((z) => (grupos[z.chave] || []).length > 0);
-  if (!temAlgo) return <p className="relatorio-vazio">Ainda sem dados suficientes pra mostrar aqui.</p>;
+  const [selecionada, setSelecionada] = useState(null);
+  const cores = { domina: "#4FA88F", progresso: "#FF8A5B", trava: "#D6336C" };
+  const todas = [];
+  ["domina", "progresso", "trava"].forEach((cat) => {
+    (grupos[cat] || []).forEach((b) => todas.push({ ...b, cat }));
+  });
+  if (todas.length === 0) {
+    return <p className="relatorio-vazio">Ainda sem dados suficientes pra mostrar aqui.</p>;
+  }
+  const ALTURA = Math.min(280, Math.max(190, 60 + todas.length * 14));
   return (
-    <div className="grafico-bolhas">
-      {zonas.map((z) => {
-        const bolhas = grupos[z.chave] || [];
-        if (bolhas.length === 0) return null;
-        return (
-          <div className="bolhas-zona" key={z.chave}>
-            <h4>{z.titulo}</h4>
-            <div className="bolhas-row">
-              {bolhas.map((b) => {
-                const metric = z.metric(b);
-                const diametro = Math.min(96, Math.max(52, 40 + metric * 9));
-                return (
-                  <div
-                    key={b.nome}
-                    className="bolha"
-                    style={{ width: diametro, height: diametro, background: z.cor }}
-                    title={`${b.nome}: ${b.acertos} acertos, ${b.erros} erros na 1ª tentativa`}
-                  >
-                    <span className="bolha-nome">{b.nome}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
+    <div className="mapa-bolhas-wrap">
+      <div className="mapa-bolhas-legenda">
+        <span><i className="legenda-ponto" style={{ background: cores.domina }} /> domina</span>
+        <span><i className="legenda-ponto" style={{ background: cores.progresso }} /> quase lá</span>
+        <span><i className="legenda-ponto" style={{ background: cores.trava }} /> travando</span>
+      </div>
+      <div className="mapa-bolhas" style={{ height: ALTURA }}>
+        {todas.map((b, i) => {
+          const total = b.acertos + b.erros;
+          const diametro = Math.min(68, Math.max(36, 28 + total * 6));
+          const pos = posicaoEstavel(b.nome + i);
+          const isSel = selecionada === b.nome;
+          return (
+            <button
+              key={b.nome}
+              className={`bolha-mapa${isSel ? " bolha-mapa-selecionada" : ""}`}
+              style={{
+                width: diametro,
+                height: diametro,
+                left: `${pos.left}%`,
+                top: `${pos.top}%`,
+                background: cores[b.cat],
+                zIndex: isSel ? 5 : 1,
+              }}
+              onClick={() => setSelecionada(isSel ? null : b.nome)}
+            >
+              <span className="bolha-mapa-numero">{b.acertos}/{total}</span>
+            </button>
+          );
+        })}
+      </div>
+      {selecionada && (
+        <div className="mapa-bolhas-detalhe">
+          {(() => {
+            const b = todas.find((x) => x.nome === selecionada);
+            if (!b) return null;
+            return (
+              <span>
+                <strong>{b.nome}</strong>: {b.acertos} acertos e {b.erros} erros na primeira tentativa
+              </span>
+            );
+          })()}
+        </div>
+      )}
     </div>
   );
 }
@@ -11343,22 +11383,62 @@ const CSS = `
   margin: 0 0 16px;
 }
 .resumo-narrativa-grande { font-size: 17px; text-align: center; }
-.grafico-bolhas { display: flex; flex-direction: column; gap: 18px; margin-bottom: 18px; }
-.bolhas-zona h4 { margin: 0 0 10px; font-size: 12.5px; color: var(--brown); }
-.bolhas-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-.bolha {
+
+.mapa-bolhas-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 18px; }
+.mapa-bolhas-legenda {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--brown);
+}
+.legenda-ponto {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+.mapa-bolhas {
+  position: relative;
+  width: 100%;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(129,48,23,0.10) 1px, transparent 0);
+  background-size: 16px 16px;
+  background-color: rgba(255,255,255,0.28);
+  border: 1px solid rgba(255,255,255,0.5);
+  overflow: hidden;
+}
+.bolha-mapa {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  text-align: center;
-  padding: 6px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-  flex-shrink: 0;
-  cursor: default;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-.bolha-nome { font-size: 10px; font-weight: 700; line-height: 1.15; word-break: break-word; }
+.bolha-mapa:active { transform: translate(-50%, -50%) scale(0.94); }
+.bolha-mapa-selecionada {
+  box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--brown);
+  transform: translate(-50%, -50%) scale(1.06);
+}
+.bolha-mapa-numero { color: #fff; font-size: 10px; font-weight: 700; }
+.mapa-bolhas-detalhe {
+  background: rgba(255,255,255,0.6);
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  color: var(--brown);
+  text-align: center;
+}
 
 .relatorio-texto-bruto {
   margin-top: 12px;
