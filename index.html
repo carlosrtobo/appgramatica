@@ -3793,12 +3793,2642 @@ const TOPICS_NIVEL4 = [
   },
 ];
 
+const TOPICS_FIGURAS_PALAVRAS = [
+  {
+    id: "fig-metafora",
+    nome: "Metáfora",
+    cor: "#D6336C",
+    dica: "Comparação implícita — sem 'como', sem conectivo.",
+    teoria: "A metáfora compara dois elementos sem usar conectivo comparativo: a semelhança é sugerida, não declarada. Em 'meus dias são folhas soltas ao vento', os dias não são literalmente folhas — a frase sugere uma semelhança (leveza, dispersão) sem dizer 'como folhas'.",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "Qual destas frases contém uma metáfora?",
+        options: [
+          "Meus dias são folhas soltas ao vento.",
+          "Ele correu como um raio até a porta.",
+          "Ela chegou às oito horas da manhã.",
+          "O cachorro latiu a noite toda.",
+        ],
+        correct: "Meus dias são folhas soltas ao vento.",
+      },
+      {
+        type: "mcq",
+        prompt: "A metáfora é uma comparação:",
+        options: [
+          "implícita, sem conectivo comparativo",
+          "explícita, sempre com a palavra 'como'",
+          "feita apenas entre números",
+          "que só existe em poemas",
+        ],
+        correct: "implícita, sem conectivo comparativo",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na palavra usada em sentido figurado (metafórico) nesta frase:",
+        words: ["A", "sala", "virou", "um", "forno", "com", "o", "calor"],
+        correct: "forno",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na palavra usada em sentido figurado (metafórico) nesta frase:",
+        words: ["O", "tempo", "é", "um", "ladrão", "silencioso"],
+        correct: "ladrão",
+      },
+      {
+        type: "mcq",
+        prompt: "Em 'Ele tem um coração de pedra', a metáfora sugere que a pessoa é:",
+        options: ["insensível, dura", "muito forte fisicamente", "colecionadora de pedras", "geóloga"],
+        correct: "insensível, dura",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete com a metáfora mais adequada:",
+        sentence: "A cidade era um ____ de luzes à noite.",
+        options: ["mar", "cadeira", "rapidamente", "sob"],
+        correct: "mar",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete com a metáfora mais adequada:",
+        sentence: "Aquele professor é uma ____ de sabedoria.",
+        options: ["fonte", "correu", "depressa", "sobre"],
+        correct: "fonte",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada frase:",
+        buckets: ["Metáfora", "Sentido literal"],
+        items: [
+          { word: "Ela é a luz da minha vida.", bucket: "Metáfora" },
+          { word: "Acendi a luz da sala.", bucket: "Sentido literal" },
+          { word: "O mundo é um palco.", bucket: "Metáfora" },
+          { word: "O palco do teatro estava vazio.", bucket: "Sentido literal" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases NÃO contém metáfora?",
+        options: [
+          "O trânsito hoje foi um caos.",
+          "A notícia foi um balde de água fria.",
+          "Comprei um balde novo para lavar o carro.",
+          "Seus olhos são dois faróis.",
+        ],
+        correct: "Comprei um balde novo para lavar o carro.",
+      },
+      {
+        type: "mcq",
+        prompt: "'A vida é uma montanha-russa' é um exemplo de:",
+        options: ["metáfora", "comparação com 'como'", "onomatopeia", "aliteração"],
+        correct: "metáfora",
+      },
+    ],
+  },
+  {
+    id: "fig-comparacao",
+    nome: "Comparação (Símile)",
+    cor: "#FF2B6F",
+    dica: "Mesma ideia da metáfora, mas com conectivo: 'como', 'tal qual'.",
+    teoria: "A comparação (ou símile) segue a mesma lógica da metáfora, mas usa um conectivo comparativo explícito, como 'como', 'tal qual', 'assim como': 'ele correu como um raio até a porta' — o conectivo 'como' declara abertamente a semelhança.",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "Qual destas frases contém uma comparação (símile)?",
+        options: [
+          "Seus olhos brilhavam como estrelas.",
+          "Seus olhos eram duas estrelas.",
+          "A sala virou um forno.",
+          "O tempo é um ladrão.",
+        ],
+        correct: "Seus olhos brilhavam como estrelas.",
+      },
+      {
+        type: "mcq",
+        prompt: "O que diferencia a comparação da metáfora?",
+        options: [
+          "a presença de um conectivo comparativo, como 'como'",
+          "a comparação nunca usa adjetivos",
+          "a metáfora só aparece em textos científicos",
+          "não há diferença nenhuma",
+        ],
+        correct: "a presença de um conectivo comparativo, como 'como'",
+      },
+      {
+        type: "classify",
+        prompt: "Clique no conectivo que introduz a comparação nesta frase:",
+        words: ["Ele", "correu", "como", "um", "raio", "até", "a", "porta"],
+        correct: "como",
+      },
+      {
+        type: "classify",
+        prompt: "Clique no conectivo que introduz a comparação nesta frase:",
+        words: ["Ela", "é", "tal", "qual", "a", "mãe", "generosa"],
+        correct: "qual",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete com o conectivo de comparação:",
+        sentence: "Ele ficou parado, ____ uma estátua.",
+        options: ["como", "porque", "sobre", "muito"],
+        correct: "como",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete com o conectivo de comparação:",
+        sentence: "Falava manso, ____ quem não quer acordar ninguém.",
+        options: ["assim como", "apesar de", "contudo", "abaixo"],
+        correct: "assim como",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada frase:",
+        buckets: ["Comparação (com conectivo)", "Metáfora (sem conectivo)"],
+        items: [
+          { word: "Forte como um touro.", bucket: "Comparação (com conectivo)" },
+          { word: "Ele é um touro na academia.", bucket: "Metáfora (sem conectivo)" },
+          { word: "Rápida como o vento.", bucket: "Comparação (com conectivo)" },
+          { word: "Ela é o vento que passa.", bucket: "Metáfora (sem conectivo)" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "'Doce como o mel' é uma:",
+        options: ["comparação", "metonímia", "catacrese", "sinestesia"],
+        correct: "comparação",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual conectivo NÃO costuma introduzir uma comparação?",
+        options: ["contudo", "como", "tal qual", "assim como"],
+        correct: "contudo",
+      },
+      {
+        type: "classify",
+        prompt: "Clique no conectivo que introduz a comparação nesta frase:",
+        words: ["Chorou", "assim", "como", "chora", "uma", "criança", "perdida"],
+        correct: "como",
+      },
+    ],
+  },
+  {
+    id: "fig-metonimia",
+    nome: "Metonímia",
+    cor: "#4A4E8B",
+    dica: "Troca de um termo por outro com relação de proximidade lógica.",
+    teoria: "A metonímia substitui um termo por outro com o qual mantém relação de proximidade lógica: o autor pela obra ('lendo Machado de Assis'), o recipiente pelo conteúdo ('bebeu três copos'), a causa pelo efeito, entre outras relações.",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "Em 'Estou lendo Machado de Assis', a metonímia troca:",
+        options: [
+          "o autor pela obra que ele escreveu",
+          "o livro pela estante",
+          "a leitura pelo sono",
+          "o escritor pelo leitor",
+        ],
+        correct: "o autor pela obra que ele escreveu",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual frase contém uma metonímia?",
+        options: [
+          "Ele bebeu três copos na festa.",
+          "Ele bebeu três copos de suco na festa.",
+          "Ele lavou três copos sujos.",
+          "Ele comprou três copos novos.",
+        ],
+        correct: "Ele bebeu três copos na festa.",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na palavra que representa metonimicamente o alimento pelo sustento nesta frase:",
+        words: ["Ele", "trabalha", "duro", "para", "ganhar", "o", "pão", "de", "cada", "dia"],
+        correct: "pão",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete usando metonímia (o recipiente pelo conteúdo):",
+        sentence: "Depois da corrida, tomei uma ____ de água gelada.",
+        options: ["garrafa", "rapidamente", "sobre", "porque"],
+        correct: "garrafa",
+      },
+      {
+        type: "mcq",
+        prompt: "'O Brasil ganhou a partida' usa metonímia porque:",
+        options: [
+          "o país (Brasil) representa a seleção/o time de jogadores",
+          "o Brasil literalmente jogou futebol",
+          "é uma hipérbole exagerada",
+          "não há figura de linguagem aqui",
+        ],
+        correct: "o país (Brasil) representa a seleção/o time de jogadores",
+      },
+      {
+        type: "mcq",
+        prompt: "Dizer 'a caneta é mais forte que a espada' usando 'a caneta' para representar a escrita é um exemplo de:",
+        options: ["metonímia (instrumento pelo que ele produz)", "onomatopeia", "aliteração", "hipérbato"],
+        correct: "metonímia (instrumento pelo que ele produz)",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada frase:",
+        buckets: ["Metonímia", "Sentido literal"],
+        items: [
+          { word: "Ele ama a leitura de Machado de Assis.", bucket: "Metonímia" },
+          { word: "Ele comprou um livro de Machado de Assis.", bucket: "Sentido literal" },
+          { word: "A plateia aplaudiu a orquestra inteira.", bucket: "Sentido literal" },
+          { word: "Todo o teatro aplaudiu de pé.", bucket: "Metonímia" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "Qual relação NÃO costuma originar uma metonímia?",
+        options: [
+          "rima entre duas palavras parecidas",
+          "autor pela obra",
+          "recipiente pelo conteúdo",
+          "causa pelo efeito",
+        ],
+        correct: "rima entre duas palavras parecidas",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete usando metonímia (parte pelo todo):",
+        sentence: "A empresa precisa de mais ____ qualificadas para o projeto.",
+        options: ["mãos", "sobre", "muito", "ontem"],
+        correct: "mãos",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na palavra que representa metonimicamente a marca pelo produto nesta frase:",
+        words: ["Ela", "limpou", "o", "chão", "com", "Bombril"],
+        correct: "Bombril",
+      },
+    ],
+  },
+  {
+    id: "fig-catacrese",
+    nome: "Catacrese",
+    cor: "#FF8A5B",
+    dica: "Uso figurado que 'gastou' o sentido original — virou o nome padrão da coisa.",
+    teoria: "A catacrese é o uso de uma palavra em sentido figurado porque não existe termo próprio para a ideia — o uso figurado 'gastou' o sentido original e virou o nome padrão da coisa: 'o braço da cadeira', 'embarcar no avião' (mesmo sem barco).",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "A catacrese acontece quando:",
+        options: [
+          "usamos uma palavra em sentido figurado por falta de termo próprio, e esse uso já virou comum",
+          "repetimos a mesma palavra várias vezes seguidas",
+          "comparamos duas coisas usando 'como'",
+          "omitimos um termo da frase",
+        ],
+        correct: "usamos uma palavra em sentido figurado por falta de termo próprio, e esse uso já virou comum",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas expressões é um exemplo clássico de catacrese?",
+        options: ["o braço da cadeira", "correu como um raio", "chorou rios de lágrimas", "tic-tac do relógio"],
+        correct: "o braço da cadeira",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na palavra usada em catacrese nesta frase:",
+        words: ["Ele", "embarcou", "no", "avião", "às", "pressas"],
+        correct: "embarcou",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na palavra usada em catacrese nesta frase:",
+        words: ["O", "sol", "nasceu", "atrás", "das", "montanhas"],
+        correct: "nasceu",
+      },
+      {
+        type: "mcq",
+        prompt: "Por que dizemos 'embarcar no avião', mesmo sem barco envolvido?",
+        options: [
+          "porque não existe um verbo próprio só para entrar em aviões, então usamos 'embarcar' em sentido figurado",
+          "porque aviões antigos pousavam na água",
+          "porque é um erro de português que se tornou comum",
+          "porque 'embarcar' é sinônimo de 'voar'",
+        ],
+        correct: "porque não existe um verbo próprio só para entrar em aviões, então usamos 'embarcar' em sentido figurado",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete com o termo mais natural (catacrese comum no português):",
+        sentence: "Preciso trocar a ____ da caneta, ela secou.",
+        options: ["ponta", "casa", "rapidamente", "sobre"],
+        correct: "ponta",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada expressão:",
+        buckets: ["Catacrese (uso 'gasto', comum)", "Metáfora (uso poético, criativo)"],
+        items: [
+          { word: "o pé da mesa", bucket: "Catacrese (uso 'gasto', comum)" },
+          { word: "o coração de pedra dela", bucket: "Metáfora (uso poético, criativo)" },
+          { word: "a folha de papel", bucket: "Catacrese (uso 'gasto', comum)" },
+          { word: "seus olhos são dois oceanos", bucket: "Metáfora (uso poético, criativo)" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "A principal diferença entre catacrese e metáfora poética é que a catacrese:",
+        options: [
+          "já está tão consolidada no uso que quase não percebemos que é figurada",
+          "só existe em textos científicos",
+          "sempre usa a palavra 'como'",
+          "é proibida na escrita formal",
+        ],
+        correct: "já está tão consolidada no uso que quase não percebemos que é figurada",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas é catacrese?",
+        options: ["a asa do avião", "a vida é um rio que corre", "correu que nem um foguete", "silêncio ensurdecedor"],
+        correct: "a asa do avião",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na palavra usada em catacrese nesta frase:",
+        words: ["Ela", "enfiou", "a", "cabeça", "da", "agulha", "na", "linha"],
+        correct: "cabeça",
+      },
+    ],
+  },
+  {
+    id: "fig-sinestesia",
+    nome: "Sinestesia",
+    cor: "#4FA88F",
+    dica: "Mistura de sensações de sentidos diferentes numa mesma expressão.",
+    teoria: "A sinestesia mistura sensações captadas por sentidos diferentes (visão, audição, tato, olfato, paladar) numa mesma expressão: 'voz doce' mistura audição e paladar; 'cor gritante' mistura visão e audição; 'silêncio pesado' mistura audição e tato.",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "A sinestesia é a figura que:",
+        options: [
+          "mistura sensações de sentidos diferentes numa mesma expressão",
+          "troca um termo por outro de significado próximo",
+          "repete sons consonantais",
+          "omite um termo da frase",
+        ],
+        correct: "mistura sensações de sentidos diferentes numa mesma expressão",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas expressões é um exemplo de sinestesia?",
+        options: ["voz doce", "voz rouca", "voz alta", "voz baixa"],
+        correct: "voz doce",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na palavra que mistura sentidos diferentes (sinestesia) nesta frase:",
+        words: ["O", "silêncio", "pesado", "tomou", "conta", "da", "sala"],
+        correct: "pesado",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na palavra que mistura sentidos diferentes (sinestesia) nesta frase:",
+        words: ["Aquela", "cor", "gritante", "incomodava", "os", "olhos"],
+        correct: "gritante",
+      },
+      {
+        type: "mcq",
+        prompt: "Em 'cor gritante', quais sentidos estão sendo misturados?",
+        options: ["visão e audição", "olfato e tato", "paladar e visão", "audição e paladar"],
+        correct: "visão e audição",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete com a palavra que cria sinestesia (mistura de sentidos):",
+        sentence: "O perfume ____ dela ficou no ar por horas.",
+        options: ["doce", "sobre", "rapidamente", "porque"],
+        correct: "doce",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada expressão:",
+        buckets: ["Sinestesia (mistura sentidos)", "Sentido único (não mistura)"],
+        items: [
+          { word: "silêncio pesado", bucket: "Sinestesia (mistura sentidos)" },
+          { word: "silêncio total", bucket: "Sentido único (não mistura)" },
+          { word: "sabor amargo", bucket: "Sentido único (não mistura)" },
+          { word: "palavras amargas", bucket: "Sinestesia (mistura sentidos)" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "Qual sentido está sendo cruzado com a audição em 'música colorida'?",
+        options: ["visão", "olfato", "tato", "paladar"],
+        correct: "visão",
+      },
+      {
+        type: "mcq",
+        prompt: "'Um cheiro azedo de decepção' combina qual sinestesia?",
+        options: ["olfato e paladar", "visão e tato", "audição e visão", "tato e paladar"],
+        correct: "olfato e paladar",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na palavra que mistura sentidos diferentes (sinestesia) nesta frase:",
+        words: ["Um", "frio", "silêncio", "cortou", "a", "conversa"],
+        correct: "frio",
+      },
+    ],
+  },
+  {
+    id: "fig-perifrase",
+    nome: "Perífrase",
+    cor: "#813017",
+    dica: "Substitui um nome por uma expressão que o caracteriza indiretamente.",
+    teoria: "A perífrase (ou antonomásia) substitui um nome próprio ou comum por uma expressão que o caracteriza indiretamente: 'o rei da selva' (o leão), 'a cidade luz' (Paris), 'o pai da aviação' (Santos Dumont).",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "A perífrase é a figura que:",
+        options: [
+          "substitui um nome por uma expressão que o caracteriza indiretamente",
+          "repete a mesma palavra várias vezes",
+          "omite um termo óbvio da frase",
+          "inverte a ordem das palavras da frase",
+        ],
+        correct: "substitui um nome por uma expressão que o caracteriza indiretamente",
+      },
+      {
+        type: "mcq",
+        prompt: "'O rei da selva' é uma perífrase para:",
+        options: ["o leão", "o elefante", "a girafa", "o tigre"],
+        correct: "o leão",
+      },
+      {
+        type: "mcq",
+        prompt: "'A cidade luz' é uma perífrase usada para se referir a:",
+        options: ["Paris", "Nova York", "Londres", "Roma"],
+        correct: "Paris",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na expressão que substitui o nome próprio (perífrase) nesta frase — clique em uma das palavras dela:",
+        words: ["O", "pai", "da", "aviação", "nasceu", "no", "Brasil"],
+        correct: "aviação",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete a perífrase mais conhecida:",
+        sentence: "Santos Dumont é lembrado como o pai da ____.",
+        options: ["aviação", "cadeira", "depressa", "sobre"],
+        correct: "aviação",
+      },
+      {
+        type: "mcq",
+        prompt: "Dizer 'o poeta dos escravos' para se referir a Castro Alves é um exemplo de:",
+        options: ["perífrase", "onomatopeia", "aliteração", "hipérbato"],
+        correct: "perífrase",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada expressão:",
+        buckets: ["Perífrase (nome indireto)", "Nome direto"],
+        items: [
+          { word: "o rei da selva", bucket: "Perífrase (nome indireto)" },
+          { word: "o leão", bucket: "Nome direto" },
+          { word: "a cidade luz", bucket: "Perífrase (nome indireto)" },
+          { word: "Paris", bucket: "Nome direto" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas expressões é uma perífrase para o planeta Terra?",
+        options: ["o berço da humanidade", "o astro-rei", "a estrela mais próxima", "o satélite natural"],
+        correct: "o berço da humanidade",
+      },
+      {
+        type: "mcq",
+        prompt: "A perífrase é também chamada de:",
+        options: ["antonomásia", "assonância", "silepse", "zeugma"],
+        correct: "antonomásia",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete a perífrase mais conhecida:",
+        sentence: "O sol é chamado poeticamente de astro-____.",
+        options: ["rei", "sobre", "porque", "muito"],
+        correct: "rei",
+      },
+    ],
+  },
+];
+
+const TOPICS_FIGURAS_PENSAMENTO = [
+  {
+    id: "fig-hiperbole",
+    nome: "Hipérbole",
+    cor: "#D6336C",
+    dica: "Exagero intencional para intensificar uma ideia.",
+    teoria: "A hipérbole é um exagero intencional usado para intensificar uma ideia ou emoção: 'já te falei isso mil vezes!', 'estou morrendo de fome' — ninguém espera que esses exageros sejam entendidos ao pé da letra.",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "A hipérbole é a figura que:",
+        options: [
+          "exagera intencionalmente para intensificar uma ideia",
+          "suaviza uma informação desagradável",
+          "nega o contrário do que se quer afirmar",
+          "diz o oposto do que se pensa",
+        ],
+        correct: "exagera intencionalmente para intensificar uma ideia",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases contém uma hipérbole?",
+        options: [
+          "Já te falei isso mil vezes!",
+          "Já te falei isso duas vezes.",
+          "Preciso te falar uma coisa.",
+          "Vou te contar amanhã.",
+        ],
+        correct: "Já te falei isso mil vezes!",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na palavra que exagera (hipérbole) nesta frase:",
+        words: ["Estou", "morrendo", "de", "fome", "desde", "cedo"],
+        correct: "morrendo",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na palavra que exagera (hipérbole) nesta frase:",
+        words: ["Chorei", "rios", "de", "lágrimas", "naquele", "filme"],
+        correct: "rios",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete com o exagero (hipérbole) mais natural:",
+        sentence: "Esperei uma ____ de anos na fila do banco.",
+        options: ["eternidade", "cadeira", "rapidamente", "sob"],
+        correct: "eternidade",
+      },
+      {
+        type: "mcq",
+        prompt: "'Tenho um milhão de coisas para fazer hoje' é um exemplo de:",
+        options: ["hipérbole", "eufemismo", "litote", "ironia"],
+        correct: "hipérbole",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada frase:",
+        buckets: ["Hipérbole (exagero)", "Afirmação comum"],
+        items: [
+          { word: "Já disse isso um milhão de vezes.", bucket: "Hipérbole (exagero)" },
+          { word: "Já disse isso três vezes.", bucket: "Afirmação comum" },
+          { word: "Morri de vergonha na hora.", bucket: "Hipérbole (exagero)" },
+          { word: "Fiquei com vergonha na hora.", bucket: "Afirmação comum" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "A hipérbole costuma ser entendida:",
+        options: [
+          "não ao pé da letra, como um exagero proposital",
+          "sempre literalmente, como um fato",
+          "como uma mentira que engana o leitor",
+          "só em textos jurídicos",
+        ],
+        correct: "não ao pé da letra, como um exagero proposital",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases é a mais exagerada (hiperbólica)?",
+        options: [
+          "Esse mochila pesa uma tonelada!",
+          "Essa mochila pesa uns 3 quilos.",
+          "Essa mochila é azul.",
+          "Essa mochila tem dois bolsos.",
+        ],
+        correct: "Esse mochila pesa uma tonelada!",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na palavra que exagera (hipérbole) nesta frase:",
+        words: ["Ele", "correu", "numa", "velocidade", "absurda", "impossível"],
+        correct: "impossível",
+      },
+    ],
+  },
+  {
+    id: "fig-eufemismo",
+    nome: "Eufemismo",
+    cor: "#FF2B6F",
+    dica: "Suaviza uma informação desagradável ou constrangedora.",
+    teoria: "O eufemismo suaviza uma informação desagradável, dolorosa ou constrangedora: 'ele nos deixou' em vez de 'ele morreu', 'pessoa com necessidades especiais' em vez de termos pejorativos.",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "O eufemismo é a figura que:",
+        options: [
+          "suaviza uma informação desagradável ou dolorosa",
+          "exagera intencionalmente uma ideia",
+          "repete conectivos entre orações",
+          "mistura sensações de sentidos diferentes",
+        ],
+        correct: "suaviza uma informação desagradável ou dolorosa",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas expressões é um eufemismo para 'morreu'?",
+        options: ["ele nos deixou", "ele faleceu de repente", "ele foi enterrado ontem", "ele está morto"],
+        correct: "ele nos deixou",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete com o eufemismo mais adequado:",
+        sentence: "A empresa decidiu ____ vários funcionários este mês.",
+        options: ["dispensar", "sobre", "porque", "rapidamente"],
+        correct: "dispensar",
+      },
+      {
+        type: "mcq",
+        prompt: "Dizer 'pessoa em situação de rua' em vez de um termo pejorativo é um exemplo de:",
+        options: ["eufemismo", "hipérbole", "ironia", "antítese"],
+        correct: "eufemismo",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na expressão suavizada (eufemismo) nesta frase — clique em uma palavra dela:",
+        words: ["O", "paciente", "está", "em", "estado", "delicado"],
+        correct: "delicado",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada expressão:",
+        buckets: ["Eufemismo (suaviza)", "Direto (sem suavizar)"],
+        items: [
+          { word: "ele partiu para outra vida", bucket: "Eufemismo (suaviza)" },
+          { word: "ele morreu ontem", bucket: "Direto (sem suavizar)" },
+          { word: "pessoa de idade avançada", bucket: "Eufemismo (suaviza)" },
+          { word: "pessoa velha", bucket: "Direto (sem suavizar)" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "O eufemismo é muito usado em situações de:",
+        options: [
+          "luto, doença ou temas delicados, para poupar sentimentos",
+          "brincadeiras entre amigos próximos",
+          "textos técnicos de matemática",
+          "listas de compras",
+        ],
+        correct: "luto, doença ou temas delicados, para poupar sentimentos",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases usa eufemismo?",
+        options: [
+          "Infelizmente, a empresa não pôde aprovar o pedido.",
+          "A empresa recusou o pedido sem explicação.",
+          "A empresa ignorou completamente o pedido.",
+          "A empresa jogou o pedido no lixo.",
+        ],
+        correct: "Infelizmente, a empresa não pôde aprovar o pedido.",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete com o eufemismo mais adequado:",
+        sentence: "Ele está com dificuldades ____, por isso pediu ajuda.",
+        options: ["financeiras", "sobre", "muito", "ontem"],
+        correct: "financeiras",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na expressão suavizada (eufemismo) nesta frase — clique em uma palavra dela:",
+        words: ["A", "empresa", "passou", "por", "uma", "reestruturação", "difícil"],
+        correct: "reestruturação",
+      },
+    ],
+  },
+  {
+    id: "fig-litote",
+    nome: "Litote",
+    cor: "#4A4E8B",
+    dica: "Nega o contrário do que se quer afirmar, com delicadeza.",
+    teoria: "A litote nega o contrário do que se quer afirmar, atenuando a ideia — frequentemente de forma irônica ou delicada: 'não é nada feio' (= é bonito), 'ele não é burro' (= é inteligente).",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "A litote é a figura que:",
+        options: [
+          "nega o contrário do que se quer afirmar",
+          "repete a mesma palavra várias vezes",
+          "compara dois elementos com 'como'",
+          "omite um termo óbvio da frase",
+        ],
+        correct: "nega o contrário do que se quer afirmar",
+      },
+      {
+        type: "mcq",
+        prompt: "'Não é nada feio' é uma litote que quer dizer:",
+        options: ["é bonito", "é muito feio", "é indiferente", "não tem opinião"],
+        correct: "é bonito",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases é uma litote?",
+        options: ["Ele não é burro.", "Ele é muito inteligente.", "Ele é burro.", "Ele estuda bastante."],
+        correct: "Ele não é burro.",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete formando uma litote (negando o contrário):",
+        sentence: "Esse restaurante não é nada ____, viu?",
+        options: ["ruim", "sobre", "porque", "ontem"],
+        correct: "ruim",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na palavra de negação que forma a litote nesta frase:",
+        words: ["Ela", "não", "é", "pouco", "talentosa"],
+        correct: "não",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada frase:",
+        buckets: ["Litote (nega o contrário)", "Afirmação direta"],
+        items: [
+          { word: "Não é incomum ele se atrasar.", bucket: "Litote (nega o contrário)" },
+          { word: "Ele sempre se atrasa.", bucket: "Afirmação direta" },
+          { word: "Não é pouca coisa o que ela fez.", bucket: "Litote (nega o contrário)" },
+          { word: "Ela fez muita coisa.", bucket: "Afirmação direta" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "A litote costuma ter um efeito de:",
+        options: [
+          "delicadeza ou ironia sutil ao afirmar algo",
+          "exagero explícito",
+          "repetição sonora",
+          "quebra brusca da frase",
+        ],
+        correct: "delicadeza ou ironia sutil ao afirmar algo",
+      },
+      {
+        type: "mcq",
+        prompt: "'Não foi um mau resultado' quer dizer, por litote, que o resultado foi:",
+        options: ["bom", "péssimo", "irrelevante", "impossível de avaliar"],
+        correct: "bom",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete formando uma litote (negando o contrário):",
+        sentence: "O filme não deixa ____ a desejar.",
+        options: ["nada", "sobre", "muito", "ontem"],
+        correct: "nada",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na palavra de negação que forma a litote nesta frase:",
+        words: ["Não", "é", "raro", "encontrar", "erros", "assim"],
+        correct: "Não",
+      },
+    ],
+  },
+  {
+    id: "fig-ironia",
+    nome: "Ironia",
+    cor: "#FF8A5B",
+    dica: "Diz o oposto do que se pensa, geralmente com intenção crítica.",
+    teoria: "A ironia diz o oposto do que se pensa, geralmente com intenção crítica ou humorística; depende do contexto para ser percebida: 'que pontualidade admirável!' dito a quem chegou uma hora atrasado.",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "A ironia é a figura que:",
+        options: [
+          "diz o oposto do que realmente se pensa",
+          "exagera uma ideia intencionalmente",
+          "mistura sensações de sentidos diferentes",
+          "suaviza uma informação desagradável",
+        ],
+        correct: "diz o oposto do que realmente se pensa",
+      },
+      {
+        type: "mcq",
+        prompt: "Dita a quem chegou uma hora atrasado, 'que pontualidade admirável!' é:",
+        options: ["ironia", "eufemismo", "hipérbole", "litote"],
+        correct: "ironia",
+      },
+      {
+        type: "mcq",
+        prompt: "A ironia depende principalmente de:",
+        options: [
+          "contexto e entonação para ser percebida",
+          "rimas entre as palavras",
+          "repetição de conectivos",
+          "estar sempre entre aspas",
+        ],
+        correct: "contexto e entonação para ser percebida",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete de forma irônica (dizendo o oposto do que se pensa sobre um erro grave):",
+        sentence: "Ah, que ____ trabalho você fez aqui! (diante de um erro grave)",
+        options: ["ótimo", "sobre", "porque", "ontem"],
+        correct: "ótimo",
+      },
+      {
+        type: "mcq",
+        prompt: "Diante de uma sala bagunçada, dizer 'nossa, que organização impecável' é:",
+        options: ["ironia", "onomatopeia", "aliteração", "zeugma"],
+        correct: "ironia",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada situação:",
+        buckets: ["Ironia (diz o oposto)", "Elogio sincero"],
+        items: [
+          { word: "\"Ótimo trabalho\", dito diante de um erro grave", bucket: "Ironia (diz o oposto)" },
+          { word: "\"Ótimo trabalho\", dito ao ver um projeto bem feito", bucket: "Elogio sincero" },
+          { word: "\"Que sorte a minha\", dito ao furar o pneu no meio do caminho", bucket: "Ironia (diz o oposto)" },
+          { word: "\"Que sorte a minha\", dito ao ganhar na loteria", bucket: "Elogio sincero" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "A principal função da ironia costuma ser:",
+        options: [
+          "criticar ou fazer humor de forma indireta",
+          "informar dados técnicos com precisão",
+          "suavizar uma notícia triste",
+          "descrever sensações físicas",
+        ],
+        correct: "criticar ou fazer humor de forma indireta",
+      },
+      {
+        type: "mcq",
+        prompt: "Sem o contexto certo, a ironia corre o risco de ser entendida como:",
+        options: [
+          "um elogio ou afirmação literal, ao contrário do que se pretendia",
+          "uma metáfora poética",
+          "uma onomatopeia",
+          "um erro de concordância",
+        ],
+        correct: "um elogio ou afirmação literal, ao contrário do que se pretendia",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete de forma irônica (diante de alguém que derrubou tudo):",
+        sentence: "Muito ____ da sua parte, hein?",
+        options: ["cuidadoso", "sobre", "porque", "ontem"],
+        correct: "cuidadoso",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual frase, dita a alguém que chegou 2 horas atrasado, é irônica?",
+        options: [
+          "Nossa, chegou correndo, hein?",
+          "Você chegou muito atrasado hoje.",
+          "Por favor, da próxima vez chegue na hora.",
+          "Sinto muito pelo atraso do trânsito.",
+        ],
+        correct: "Nossa, chegou correndo, hein?",
+      },
+    ],
+  },
+  {
+    id: "fig-personificacao",
+    nome: "Personificação",
+    cor: "#4FA88F",
+    dica: "Dá características humanas a seres inanimados ou irracionais.",
+    teoria: "A personificação (ou prosopopeia) atribui características, ações ou sentimentos humanos a seres inanimados ou irracionais: 'o vento sussurrava segredos entre as árvores', 'a cidade dormia tranquila'.",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "A personificação é a figura que:",
+        options: [
+          "atribui características humanas a seres inanimados ou irracionais",
+          "nega o contrário do que se quer afirmar",
+          "repete conectivos entre termos",
+          "compara dois elementos usando 'como'",
+        ],
+        correct: "atribui características humanas a seres inanimados ou irracionais",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases contém personificação?",
+        options: [
+          "O vento sussurrava segredos entre as árvores.",
+          "O vento soprava forte naquela noite.",
+          "O vento vinha do norte.",
+          "O vento derrubou algumas telhas.",
+        ],
+        correct: "O vento sussurrava segredos entre as árvores.",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na palavra que dá ação humana a algo inanimado nesta frase:",
+        words: ["A", "cidade", "dormia", "tranquila", "sob", "a", "lua"],
+        correct: "dormia",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na palavra que dá ação humana a algo inanimado nesta frase:",
+        words: ["As", "estrelas", "piscavam", "para", "os", "viajantes"],
+        correct: "piscavam",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete dando característica humana ao sujeito (personificação):",
+        sentence: "O relógio antigo ____ as horas com paciência.",
+        options: ["contava", "sobre", "muito", "ontem"],
+        correct: "contava",
+      },
+      {
+        type: "mcq",
+        prompt: "'A árvore chorava com a chuva' é um exemplo de:",
+        options: ["personificação", "onomatopeia", "aliteração", "gradação"],
+        correct: "personificação",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada frase:",
+        buckets: ["Personificação", "Descrição literal"],
+        items: [
+          { word: "O mar bravo engoliu o barco.", bucket: "Personificação" },
+          { word: "O mar estava agitado naquele dia.", bucket: "Descrição literal" },
+          { word: "A casa observava a rua em silêncio.", bucket: "Personificação" },
+          { word: "A casa ficava na esquina da rua.", bucket: "Descrição literal" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "A personificação é também chamada de:",
+        options: ["prosopopeia", "antonomásia", "catacrese", "paronomásia"],
+        correct: "prosopopeia",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases NÃO é personificação?",
+        options: [
+          "O carro estava estacionado na garagem.",
+          "As flores dançavam com o vento.",
+          "O sol sorria naquela manhã.",
+          "A noite abraçava a cidade.",
+        ],
+        correct: "O carro estava estacionado na garagem.",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na palavra que dá ação humana a algo inanimado nesta frase:",
+        words: ["O", "rio", "cantava", "baixinho", "entre", "as", "pedras"],
+        correct: "cantava",
+      },
+    ],
+  },
+  {
+    id: "fig-antitese",
+    nome: "Antítese",
+    cor: "#813017",
+    dica: "Aproxima palavras de sentido oposto na mesma frase.",
+    teoria: "A antítese aproxima palavras de sentido oposto na mesma frase: 'foi um encontro de riso e lágrimas', 'entre a luz e a escuridão, escolheu ficar'.",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "A antítese é a figura que:",
+        options: [
+          "aproxima palavras de sentido oposto na mesma frase",
+          "une ideias contraditórias criando um sentido novo",
+          "repete uma palavra no início de versos seguidos",
+          "omite um termo facilmente identificável",
+        ],
+        correct: "aproxima palavras de sentido oposto na mesma frase",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases contém uma antítese?",
+        options: [
+          "Foi um encontro de riso e lágrimas.",
+          "Foi um encontro muito emocionante.",
+          "Foi um encontro rápido e discreto.",
+          "Foi um encontro de amigos antigos.",
+        ],
+        correct: "Foi um encontro de riso e lágrimas.",
+      },
+      {
+        type: "classify",
+        prompt: "Clique numa das duas palavras de sentido oposto (antítese) nesta frase:",
+        words: ["Entre", "a", "luz", "e", "a", "escuridão", "escolheu", "ficar"],
+        correct: ["luz", "escuridão"],
+      },
+      {
+        type: "classify",
+        prompt: "Clique numa das duas palavras de sentido oposto (antítese) nesta frase:",
+        words: ["Ele", "vive", "entre", "o", "amor", "e", "o", "ódio"],
+        correct: ["amor", "ódio"],
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete formando uma antítese (sentido oposto):",
+        sentence: "Foi um dia de vitórias e ____.",
+        options: ["derrotas", "sobre", "porque", "ontem"],
+        correct: "derrotas",
+      },
+      {
+        type: "mcq",
+        prompt: "'Rico de sonhos, pobre de dinheiro' é uma:",
+        options: ["antítese", "onomatopeia", "elipse", "polissíndeto"],
+        correct: "antítese",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada par de palavras:",
+        buckets: ["Sentido oposto (antítese)", "Sentido parecido"],
+        items: [
+          { word: "guerra e paz", bucket: "Sentido oposto (antítese)" },
+          { word: "guerra e conflito", bucket: "Sentido parecido" },
+          { word: "subir e descer", bucket: "Sentido oposto (antítese)" },
+          { word: "subir e ascender", bucket: "Sentido parecido" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "A antítese cria efeito de:",
+        options: [
+          "contraste, ao aproximar ideias opostas",
+          "suavização de uma notícia ruim",
+          "exagero de uma ideia",
+          "mistura de sentidos diferentes (visão, olfato etc.)",
+        ],
+        correct: "contraste, ao aproximar ideias opostas",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual par de palavras forma uma antítese?",
+        options: ["começo e fim", "começo e início", "fim e término", "início e começo"],
+        correct: "começo e fim",
+      },
+      {
+        type: "classify",
+        prompt: "Clique numa das duas palavras de sentido oposto (antítese) nesta frase:",
+        words: ["Chorou", "de", "alegria", "e", "tristeza", "ao", "mesmo", "tempo"],
+        correct: ["alegria", "tristeza"],
+      },
+    ],
+  },
+  {
+    id: "fig-paradoxo",
+    nome: "Paradoxo",
+    cor: "#D6336C",
+    dica: "Une ideias contraditórias que geram um sentido novo — diferente da antítese.",
+    teoria: "O paradoxo (ou oxímoro) une ideias contraditórias que, juntas, geram um sentido novo e aparentemente impossível — diferente da antítese, que apenas opõe termos sem fundi-los: 'um silêncio ensurdecedor', 'vivo morto de saudade'.",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "O paradoxo é a figura que:",
+        options: [
+          "une ideias contraditórias formando um sentido novo, aparentemente impossível",
+          "apenas aproxima palavras opostas na mesma frase, sem fundi-las",
+          "repete sons vocálicos numa mesma frase",
+          "troca a ordem direta da oração",
+        ],
+        correct: "une ideias contraditórias formando um sentido novo, aparentemente impossível",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas expressões é um paradoxo (não apenas uma antítese)?",
+        options: ["um silêncio ensurdecedor", "riso e choro", "luz e sombra", "vitória e derrota"],
+        correct: "um silêncio ensurdecedor",
+      },
+      {
+        type: "mcq",
+        prompt: "'Vivo morto de saudade' é um exemplo de:",
+        options: ["paradoxo", "onomatopeia", "polissíndeto", "hipérbato"],
+        correct: "paradoxo",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete formando um paradoxo (ideia contraditória fundida):",
+        sentence: "Senti uma dor ____ deliciosa ao rever aquelas fotos.",
+        options: ["dolorosamente", "sobre", "porque", "ontem"],
+        correct: "dolorosamente",
+      },
+      {
+        type: "mcq",
+        prompt: "O paradoxo é também chamado de:",
+        options: ["oxímoro", "antonomásia", "catacrese", "zeugma"],
+        correct: "oxímoro",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada expressão:",
+        buckets: ["Paradoxo (une contradição num só sentido)", "Antítese (só aproxima opostos)"],
+        items: [
+          { word: "um silêncio ensurdecedor", bucket: "Paradoxo (une contradição num só sentido)" },
+          { word: "silêncio e barulho", bucket: "Antítese (só aproxima opostos)" },
+          { word: "doce amargura", bucket: "Paradoxo (une contradição num só sentido)" },
+          { word: "doce e amargo", bucket: "Antítese (só aproxima opostos)" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "A principal diferença entre paradoxo e antítese é que o paradoxo:",
+        options: [
+          "funde as ideias contraditórias num único sentido novo, não só as aproxima",
+          "nunca usa adjetivos",
+          "só existe em textos religiosos",
+          "sempre tem duas frases separadas por vírgula",
+        ],
+        correct: "funde as ideias contraditórias num único sentido novo, não só as aproxima",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas é um paradoxo?",
+        options: ["gelo em chamas", "frio e calor", "inverno e verão", "dia e noite"],
+        correct: "gelo em chamas",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete formando um paradoxo:",
+        sentence: "É preciso morrer um pouco para ____ de verdade.",
+        options: ["viver", "sobre", "muito", "ontem"],
+        correct: "viver",
+      },
+      {
+        type: "mcq",
+        prompt: "'Ouço um grito calado dentro de mim' é um exemplo de:",
+        options: ["paradoxo", "elipse", "zeugma", "assíndeto"],
+        correct: "paradoxo",
+      },
+    ],
+  },
+  {
+    id: "fig-gradacao",
+    nome: "Gradação",
+    cor: "#FF2B6F",
+    dica: "Sequência de ideias em ordem crescente (clímax) ou decrescente (anticlímax).",
+    teoria: "A gradação organiza uma sequência de ideias em ordem crescente (clímax) ou decrescente (anticlímax) de intensidade: 'olhou, hesitou, tremeu, e finalmente decidiu' (crescente); 'era rico, depois remediado, depois pobre, depois nada' (decrescente).",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "A gradação é a figura que organiza:",
+        options: [
+          "uma sequência de ideias em ordem crescente ou decrescente de intensidade",
+          "palavras de sentido oposto na mesma frase",
+          "sons parecidos entre palavras diferentes",
+          "uma frase sem nenhum conectivo",
+        ],
+        correct: "uma sequência de ideias em ordem crescente ou decrescente de intensidade",
+      },
+      {
+        type: "mcq",
+        prompt: "'Olhou, hesitou, tremeu, e finalmente decidiu' é uma gradação:",
+        options: ["crescente (clímax)", "decrescente (anticlímax)", "sem direção definida", "não é gradação"],
+        correct: "crescente (clímax)",
+      },
+      {
+        type: "mcq",
+        prompt: "'Era rico, depois remediado, depois pobre, depois nada' é uma gradação:",
+        options: ["decrescente (anticlímax)", "crescente (clímax)", "sem direção definida", "não é gradação"],
+        correct: "decrescente (anticlímax)",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete a sequência crescente (gradação):",
+        sentence: "Sorriu, riu, gargalhou e por fim ____ de tanto rir.",
+        options: ["chorou", "sobre", "porque", "ontem"],
+        correct: "chorou",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na última palavra da sequência em gradação nesta frase:",
+        words: ["Caminhou", "correu", "disparou", "voou", "pela", "rua"],
+        correct: "voou",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada sequência:",
+        buckets: ["Gradação crescente", "Gradação decrescente"],
+        items: [
+          { word: "pequeno, médio, grande, enorme", bucket: "Gradação crescente" },
+          { word: "enorme, grande, médio, pequeno", bucket: "Gradação decrescente" },
+          { word: "sussurro, fala, grito, urro", bucket: "Gradação crescente" },
+          { word: "urro, grito, fala, sussurro", bucket: "Gradação decrescente" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "A gradação crescente também é chamada de:",
+        options: ["clímax", "anticlímax", "antítese", "paradoxo"],
+        correct: "clímax",
+      },
+      {
+        type: "mcq",
+        prompt: "A gradação decrescente também é chamada de:",
+        options: ["anticlímax", "clímax", "hipérbole", "eufemismo"],
+        correct: "anticlímax",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases apresenta gradação?",
+        options: [
+          "Ele estudou, aprendeu, dominou e ensinou o assunto.",
+          "Ele estudou matemática ontem à noite.",
+          "Ele gosta de estudar matemática.",
+          "Ele nunca estuda matemática.",
+        ],
+        correct: "Ele estudou, aprendeu, dominou e ensinou o assunto.",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete a sequência decrescente (gradação):",
+        sentence: "Tinha tudo, depois quase tudo, depois pouco, depois ____.",
+        options: ["nada", "sobre", "muito", "ontem"],
+        correct: "nada",
+      },
+    ],
+  },
+  {
+    id: "fig-apostrofe",
+    nome: "Apóstrofe",
+    cor: "#4A4E8B",
+    dica: "Interpelação enfática de um ser, interrompendo o discurso pra falar com ele.",
+    teoria: "A apóstrofe é a interpelação enfática de um ser (real, imaginário, ausente ou presente), interrompendo o discurso para se dirigir a ele diretamente: 'ó tempo, por que corres tão depressa?', 'Deus do céu, dai-me forças!'.",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "A apóstrofe é a figura que:",
+        options: [
+          "interrompe o discurso para se dirigir diretamente a um ser, real ou imaginário",
+          "nega o contrário do que se quer afirmar",
+          "exagera uma ideia intencionalmente",
+          "omite um termo já mencionado antes",
+        ],
+        correct: "interrompe o discurso para se dirigir diretamente a um ser, real ou imaginário",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases contém uma apóstrofe?",
+        options: [
+          "Ó tempo, por que corres tão depressa?",
+          "O tempo passa rápido demais.",
+          "Já se passaram dez anos.",
+          "O tempo é relativo, segundo a física.",
+        ],
+        correct: "Ó tempo, por que corres tão depressa?",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na interjeição que abre a apóstrofe nesta frase:",
+        words: ["Ó", "Deus", "do", "céu", "dai-me", "forças"],
+        correct: "Ó",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete formando uma apóstrofe:",
+        sentence: "____ pátria amada, quantas histórias você guarda!",
+        options: ["Ó", "Sobre", "Porque", "Ontem"],
+        correct: "Ó",
+      },
+      {
+        type: "mcq",
+        prompt: "A apóstrofe costuma vir acompanhada de:",
+        options: [
+          "uma interjeição de invocação, como 'ó' ou 'oh'",
+          "uma sequência crescente de palavras",
+          "uma palavra repetida em todos os versos",
+          "um conectivo comparativo, como 'como'",
+        ],
+        correct: "uma interjeição de invocação, como 'ó' ou 'oh'",
+      },
+      {
+        type: "mcq",
+        prompt: "'Musas, inspirai-me para este canto!' é um exemplo de:",
+        options: ["apóstrofe", "litote", "sinestesia", "zeugma"],
+        correct: "apóstrofe",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada frase:",
+        buckets: ["Apóstrofe (invocação direta)", "Frase comum (sem invocação)"],
+        items: [
+          { word: "Ó estrelas, guiai meus passos!", bucket: "Apóstrofe (invocação direta)" },
+          { word: "As estrelas brilham à noite.", bucket: "Frase comum (sem invocação)" },
+          { word: "Vida, por que és tão injusta?", bucket: "Apóstrofe (invocação direta)" },
+          { word: "A vida tem lá suas injustiças.", bucket: "Frase comum (sem invocação)" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "Um ser 'ausente', na definição de apóstrofe, pode ser:",
+        options: [
+          "alguém que já morreu, ou uma entidade abstrata como a pátria ou o tempo",
+          "apenas pessoas vivas presentes na cena",
+          "só personagens de desenho animado",
+          "apenas animais de estimação",
+        ],
+        correct: "alguém que já morreu, ou uma entidade abstrata como a pátria ou o tempo",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases é uma apóstrofe dirigida à lua?",
+        options: [
+          "Ó lua, testemunha dos meus segredos!",
+          "A lua estava cheia ontem à noite.",
+          "A lua influencia as marés.",
+          "Vi a lua pela janela do quarto.",
+        ],
+        correct: "Ó lua, testemunha dos meus segredos!",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na interjeição que abre a apóstrofe nesta frase:",
+        words: ["Oh", "vida", "por", "que", "és", "tão", "curta"],
+        correct: "Oh",
+      },
+    ],
+  },
+];
+
+const TOPICS_FIGURAS_SINTAXE = [
+  {
+    id: "fig-elipse",
+    nome: "Elipse",
+    cor: "#FF8A5B",
+    dica: "Omissão de um termo facilmente identificável pelo contexto.",
+    teoria: "A elipse é a omissão de um termo facilmente identificável pelo contexto: em 'na sala, dois sofás; na cozinha, uma mesa', o verbo 'havia' fica subentendido, sem precisar ser repetido.",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "A elipse é a figura que:",
+        options: [
+          "omite um termo facilmente identificável pelo contexto",
+          "repete a mesma palavra várias vezes seguidas",
+          "inverte a ordem das palavras da frase",
+          "une duas ideias contraditórias",
+        ],
+        correct: "omite um termo facilmente identificável pelo contexto",
+      },
+      {
+        type: "mcq",
+        prompt: "Em 'Na sala, dois sofás; na cozinha, uma mesa', qual palavra está omitida (elidida) nas duas partes?",
+        options: ["havia", "gostava", "comprou", "quebrou"],
+        correct: "havia",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases contém uma elipse?",
+        options: [
+          "Em casa, silêncio; na rua, festa.",
+          "Em casa havia silêncio, mas na rua havia festa.",
+          "A casa estava em silêncio total.",
+          "A rua estava cheia de gente festejando.",
+        ],
+        correct: "Em casa, silêncio; na rua, festa.",
+      },
+      {
+        type: "fillblank",
+        prompt: "Qual verbo está subentendido (elidido) nesta frase? 'No campo, boiadas; no céu, ____.'",
+        sentence: "No campo, boiadas; no céu, nuvens — em ambas as partes, o verbo ____ está subentendido.",
+        options: ["havia", "corria", "nadava", "sobre"],
+        correct: "havia",
+      },
+      {
+        type: "mcq",
+        prompt: "A elipse é possível porque:",
+        options: [
+          "o termo omitido é facilmente recuperado pelo contexto da frase",
+          "a frase fica gramaticalmente incompleta e sem sentido",
+          "é sempre um erro de escrita",
+          "o leitor precisa adivinhar aleatoriamente",
+        ],
+        correct: "o termo omitido é facilmente recuperado pelo contexto da frase",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada frase:",
+        buckets: ["Tem elipse (termo omitido)", "Sem elipse (termo explícito)"],
+        items: [
+          { word: "Uns preferem praia; outros, montanha.", bucket: "Tem elipse (termo omitido)" },
+          { word: "Uns preferem praia; outros preferem montanha.", bucket: "Sem elipse (termo explícito)" },
+          { word: "No verão, calor; no inverno, frio.", bucket: "Tem elipse (termo omitido)" },
+          { word: "No verão faz calor; no inverno faz frio.", bucket: "Sem elipse (termo explícito)" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "Em 'Alguns escolheram ficar. Outros, partir', o que está elidido antes de 'partir'?",
+        options: ["escolheram", "correram", "gritaram", "dormiram"],
+        correct: "escolheram",
+      },
+      {
+        type: "mcq",
+        prompt: "A elipse costuma dar ao texto um efeito de:",
+        options: [
+          "economia e agilidade, evitando repetição desnecessária",
+          "exagero e ênfase forçada",
+          "confusão total, quebrando o sentido",
+          "musicalidade sonora",
+        ],
+        correct: "economia e agilidade, evitando repetição desnecessária",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual palavra foi omitida (elidida) em 'Ele foi ao mercado; ela, à padaria'?",
+        options: ["foi", "comprou", "voltou", "chegou"],
+        correct: "foi",
+      },
+      {
+        type: "fillblank",
+        prompt: "Qual verbo está subentendido nesta frase? 'Em cima, o quarto; embaixo, a garagem.'",
+        sentence: "Em cima, o quarto; embaixo, a garagem — em ambas as partes, o verbo ____ está subentendido.",
+        options: ["ficava", "corria", "chorava", "sobre"],
+        correct: "ficava",
+      },
+    ],
+  },
+  {
+    id: "fig-zeugma",
+    nome: "Zeugma",
+    cor: "#4FA88F",
+    dica: "Tipo de elipse que omite um termo já mencionado antes na frase.",
+    teoria: "O zeugma é um tipo de elipse em que se omite um termo já mencionado anteriormente na frase: 'ela gosta de romance; ele, de suspense' — o verbo 'gosta' aparece só na primeira parte e fica subentendido na segunda.",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "O zeugma é um tipo específico de elipse em que:",
+        options: [
+          "o termo omitido já havia aparecido antes, na primeira parte da frase",
+          "o termo omitido nunca é mencionado em nenhum lugar",
+          "a frase inteira é repetida duas vezes",
+          "a ordem das palavras é invertida",
+        ],
+        correct: "o termo omitido já havia aparecido antes, na primeira parte da frase",
+      },
+      {
+        type: "mcq",
+        prompt: "Em 'Ela gosta de romance; ele, de suspense', qual palavra da primeira parte fica subentendida na segunda?",
+        options: ["gosta", "romance", "suspense", "ele"],
+        correct: "gosta",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases contém um zeugma?",
+        options: [
+          "Eu estudo português; meu irmão, matemática.",
+          "Eu estudo português e meu irmão estuda matemática.",
+          "Eu e meu irmão estudamos juntos.",
+          "Meu irmão estuda matemática todos os dias.",
+        ],
+        correct: "Eu estudo português; meu irmão, matemática.",
+      },
+      {
+        type: "fillblank",
+        prompt: "Qual verbo, já usado antes, fica subentendido depois do ponto e vírgula? 'Ana comprou um vestido; Bia, uma bolsa.'",
+        sentence: "Ana comprou um vestido; Bia, uma bolsa — o verbo ____ fica subentendido na segunda parte.",
+        options: ["comprou", "vendeu", "usou", "sobre"],
+        correct: "comprou",
+      },
+      {
+        type: "mcq",
+        prompt: "A diferença entre zeugma e elipse comum é que o zeugma:",
+        options: [
+          "sempre repete um termo que já apareceu explicitamente antes na frase",
+          "nunca pode ser recuperado pelo contexto",
+          "só acontece em poesia",
+          "sempre envolve um adjetivo",
+        ],
+        correct: "sempre repete um termo que já apareceu explicitamente antes na frase",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada frase:",
+        buckets: ["Zeugma (repete termo já dito)", "Sem zeugma"],
+        items: [
+          { word: "Pedro joga futebol; Marta, vôlei.", bucket: "Zeugma (repete termo já dito)" },
+          { word: "Pedro joga futebol e Marta joga vôlei.", bucket: "Sem zeugma" },
+          { word: "Um trouxe o bolo; outro, o refrigerante.", bucket: "Zeugma (repete termo já dito)" },
+          { word: "Um trouxe o bolo e outro trouxe o refrigerante.", bucket: "Sem zeugma" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "Em 'Nós lemos o livro; vocês, a revista', o que está subentendido antes de 'a revista'?",
+        options: ["lemos", "compramos", "vendemos", "escrevemos"],
+        correct: "lemos",
+      },
+      {
+        type: "mcq",
+        prompt: "O zeugma ajuda o texto a ficar:",
+        options: [
+          "mais econômico, sem repetir palavras desnecessariamente",
+          "mais longo e detalhado",
+          "mais confuso de entender",
+          "mais formal e burocrático",
+        ],
+        correct: "mais econômico, sem repetir palavras desnecessariamente",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual verbo está subentendido em 'Você prefere café; eu, chá'?",
+        options: ["prefere", "odeia", "esquece", "compra"],
+        correct: "prefere",
+      },
+      {
+        type: "fillblank",
+        prompt: "Qual verbo, já usado antes, fica subentendido? 'O pai levou o filho ao cinema; a mãe, a filha ao parque.'",
+        sentence: "O pai levou o filho ao cinema; a mãe, a filha ao parque — o verbo ____ fica subentendido na segunda parte.",
+        options: ["levou", "buscou", "chamou", "sobre"],
+        correct: "levou",
+      },
+    ],
+  },
+  {
+    id: "fig-hiperbato",
+    nome: "Hipérbato",
+    cor: "#813017",
+    dica: "Inversão da ordem direta da oração, geralmente para dar ênfase.",
+    teoria: "O hipérbato inverte a ordem direta (sujeito-verbo-complemento) da oração, geralmente para dar ênfase: ordem direta 'os alunos ouviram atentos a explicação' vira, em hipérbato, 'atentos, a explicação os alunos ouviram'.",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "O hipérbato é a figura que:",
+        options: [
+          "inverte a ordem direta da oração, geralmente para dar ênfase",
+          "omite um termo facilmente identificável",
+          "nega o contrário do que se quer afirmar",
+          "repete conectivos entre orações",
+        ],
+        correct: "inverte a ordem direta da oração, geralmente para dar ênfase",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases está na ordem direta (sujeito-verbo-complemento)?",
+        options: [
+          "Os alunos ouviram atentos a explicação.",
+          "Atentos, a explicação os alunos ouviram.",
+          "A explicação, atentos, ouviram os alunos.",
+          "Ouviram os alunos, atentos, a explicação.",
+        ],
+        correct: "Os alunos ouviram atentos a explicação.",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases está em hipérbato (ordem invertida)?",
+        options: [
+          "De verde se vestiu a floresta inteira.",
+          "A floresta inteira se vestiu de verde.",
+          "A floresta é verde o ano todo.",
+          "A floresta ficou mais verde na primavera.",
+        ],
+        correct: "De verde se vestiu a floresta inteira.",
+      },
+      {
+        type: "mcq",
+        prompt: "O hipérbato é usado principalmente para:",
+        options: [
+          "dar ênfase a uma parte da frase, alterando a ordem esperada",
+          "corrigir um erro gramatical",
+          "encurtar a frase, omitindo palavras",
+          "misturar sensações de sentidos diferentes",
+        ],
+        correct: "dar ênfase a uma parte da frase, alterando a ordem esperada",
+      },
+      {
+        type: "fillblank",
+        prompt: "Reescrevendo em ordem direta: 'Longos foram os anos de espera' vira 'Os anos de espera foram ____.'",
+        sentence: "Os anos de espera foram ____.",
+        options: ["longos", "sobre", "porque", "ontem"],
+        correct: "longos",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada frase:",
+        buckets: ["Hipérbato (ordem invertida)", "Ordem direta"],
+        items: [
+          { word: "Cansado chegou o viajante em casa.", bucket: "Hipérbato (ordem invertida)" },
+          { word: "O viajante cansado chegou em casa.", bucket: "Ordem direta" },
+          { word: "Triste ficou o menino com a notícia.", bucket: "Hipérbato (ordem invertida)" },
+          { word: "O menino ficou triste com a notícia.", bucket: "Ordem direta" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases é a versão em hipérbato de 'Meu coração bate forte'?",
+        options: [
+          "Forte bate meu coração.",
+          "Meu coração bate rápido.",
+          "Meu coração está acelerado.",
+          "Bate meu coração forte às vezes.",
+        ],
+        correct: "Forte bate meu coração.",
+      },
+      {
+        type: "mcq",
+        prompt: "O hipérbato é muito comum em:",
+        options: ["textos poéticos, que buscam efeito estético", "manuais técnicos de instalação", "listas de ingredientes", "bulas de remédio"],
+        correct: "textos poéticos, que buscam efeito estético",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases está em ordem direta?",
+        options: [
+          "O menino comeu o bolo rapidamente.",
+          "Rapidamente o bolo o menino comeu.",
+          "O bolo, rapidamente, comeu o menino.",
+          "Comeu rapidamente o menino o bolo.",
+        ],
+        correct: "O menino comeu o bolo rapidamente.",
+      },
+      {
+        type: "fillblank",
+        prompt: "Reescrevendo em ordem direta: 'Calados ficaram todos os presentes' vira 'Todos os presentes ficaram ____.'",
+        sentence: "Todos os presentes ficaram ____.",
+        options: ["calados", "sobre", "muito", "ontem"],
+        correct: "calados",
+      },
+    ],
+  },
+  {
+    id: "fig-polissindeto",
+    nome: "Polissíndeto",
+    cor: "#D6336C",
+    dica: "Repetição proposital de conectivos entre os termos.",
+    teoria: "O polissíndeto repete propositalmente conectivos coordenativos (e, nem, ou) entre os termos: 'correu e gritou e chorou e caiu' — a repetição do 'e' cria um efeito de acúmulo, de continuidade sem pausa.",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "O polissíndeto é a figura que:",
+        options: [
+          "repete propositalmente conectivos como 'e' entre os termos",
+          "omite todos os conectivos da frase",
+          "inverte a ordem das palavras",
+          "nega o contrário do que se afirma",
+        ],
+        correct: "repete propositalmente conectivos como 'e' entre os termos",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases contém um polissíndeto?",
+        options: [
+          "Correu e gritou e chorou e caiu.",
+          "Correu, gritou, chorou, caiu.",
+          "Correu e depois gritou.",
+          "Correu, mas não gritou.",
+        ],
+        correct: "Correu e gritou e chorou e caiu.",
+      },
+      {
+        type: "classify",
+        prompt: "Clique em uma das ocorrências repetidas do conectivo (polissíndeto) nesta frase:",
+        words: ["Ele", "comeu", "e", "bebeu", "e", "dançou", "a", "noite", "toda"],
+        correct: "e",
+      },
+      {
+        type: "mcq",
+        prompt: "O efeito do polissíndeto costuma ser de:",
+        options: [
+          "acúmulo e continuidade, como se a ação não parasse",
+          "rapidez seca, sem pausas nem conectivos",
+          "suavização de uma notícia ruim",
+          "silêncio e pausa longa",
+        ],
+        correct: "acúmulo e continuidade, como se a ação não parasse",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete repetindo o conectivo (polissíndeto):",
+        sentence: "Ela cantou ____ dançou ____ sorriu a festa inteira.",
+        options: ["e", "sobre", "porque", "muito"],
+        correct: "e",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada frase:",
+        buckets: ["Polissíndeto (conectivo repetido)", "Sem repetição de conectivo"],
+        items: [
+          { word: "Nem chorou, nem gritou, nem reclamou.", bucket: "Polissíndeto (conectivo repetido)" },
+          { word: "Não chorou, gritou ou reclamou.", bucket: "Sem repetição de conectivo" },
+          { word: "Ele correu e pulou e nadou o dia todo.", bucket: "Polissíndeto (conectivo repetido)" },
+          { word: "Ele correu, pulou e nadou o dia todo.", bucket: "Sem repetição de conectivo" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "Qual conjunção aparece repetida no polissíndeto 'Nem estudou, nem trabalhou, nem descansou'?",
+        options: ["nem", "mas", "porém", "logo"],
+        correct: "nem",
+      },
+      {
+        type: "mcq",
+        prompt: "O polissíndeto é o oposto, em construção, de qual figura (que evita conectivos)?",
+        options: ["assíndeto", "metáfora", "litote", "catacrese"],
+        correct: "assíndeto",
+      },
+      {
+        type: "classify",
+        prompt: "Clique em uma das ocorrências repetidas do conectivo (polissíndeto) nesta frase:",
+        words: ["Ou", "estuda", "ou", "trabalha", "ou", "desiste", "de", "vez"],
+        correct: "ou",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases NÃO é um polissíndeto?",
+        options: [
+          "Ele chegou, sentou, comeu.",
+          "Ele chegou e sentou e comeu.",
+          "Nem quis nem pôde nem tentou.",
+          "E chorou e riu e gritou ao mesmo tempo.",
+        ],
+        correct: "Ele chegou, sentou, comeu.",
+      },
+    ],
+  },
+  {
+    id: "fig-assindeto",
+    nome: "Assíndeto",
+    cor: "#FF2B6F",
+    dica: "Ausência de conectivos entre orações — dá ritmo mais rápido.",
+    teoria: "O assíndeto é a ausência de conectivos entre orações ou termos, geralmente substituídos por vírgulas — dá ritmo mais rápido ao texto: 'chegou, olhou, decidiu, partiu'.",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "O assíndeto é a figura que:",
+        options: [
+          "retira os conectivos entre orações, geralmente usando vírgulas no lugar",
+          "repete os conectivos várias vezes",
+          "inverte a ordem das palavras da frase",
+          "mistura sensações de sentidos diferentes",
+        ],
+        correct: "retira os conectivos entre orações, geralmente usando vírgulas no lugar",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases contém um assíndeto?",
+        options: [
+          "Chegou, olhou, decidiu, partiu.",
+          "Chegou e olhou e decidiu e partiu.",
+          "Chegou, mas decidiu partir depois.",
+          "Chegou porque precisava decidir algo.",
+        ],
+        correct: "Chegou, olhou, decidiu, partiu.",
+      },
+      {
+        type: "mcq",
+        prompt: "O efeito do assíndeto costuma ser de:",
+        options: [
+          "ritmo rápido, cortado, como uma sequência de flashes",
+          "lentidão e continuidade sem fim",
+          "suavização de uma informação",
+          "mistura de sentidos diferentes",
+        ],
+        correct: "ritmo rápido, cortado, como uma sequência de flashes",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete no estilo assíndeto (sem conectivo, só vírgula):",
+        sentence: "Abriu a porta, entrou, ____ a mala no chão.",
+        options: ["largou", "porque", "sobre", "então"],
+        correct: "largou",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada frase:",
+        buckets: ["Assíndeto (sem conectivo)", "Com conectivo explícito"],
+        items: [
+          { word: "Levantou, vestiu-se, saiu.", bucket: "Assíndeto (sem conectivo)" },
+          { word: "Levantou e depois se vestiu e saiu.", bucket: "Com conectivo explícito" },
+          { word: "Olhou, hesitou, foi embora.", bucket: "Assíndeto (sem conectivo)" },
+          { word: "Olhou, mas hesitou antes de ir embora.", bucket: "Com conectivo explícito" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "O assíndeto é o oposto, em construção, de qual figura (que repete conectivos)?",
+        options: ["polissíndeto", "metonímia", "eufemismo", "gradação"],
+        correct: "polissíndeto",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases é um assíndeto?",
+        options: [
+          "Correu, pulou, nadou, venceu.",
+          "Correu e pulou e nadou e venceu.",
+          "Correu porque queria vencer.",
+          "Correu, mas não conseguiu vencer.",
+        ],
+        correct: "Correu, pulou, nadou, venceu.",
+      },
+      {
+        type: "mcq",
+        prompt: "No assíndeto, as vírgulas substituem principalmente:",
+        options: [
+          "os conectivos que ligariam as orações",
+          "os verbos da frase",
+          "os sujeitos das orações",
+          "os adjetivos do texto",
+        ],
+        correct: "os conectivos que ligariam as orações",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete no estilo assíndeto (sem conectivo, só vírgula):",
+        sentence: "Olhou pra trás, ____, seguiu em frente.",
+        options: ["suspirou", "porque", "sobre", "então"],
+        correct: "suspirou",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases NÃO é assíndeto?",
+        options: [
+          "Ele estudou porque queria passar, então dedicou-se muito.",
+          "Estudou, dedicou-se, passou.",
+          "Chegou, sentou, começou a trabalhar.",
+          "Acordou, tomou café, saiu de casa.",
+        ],
+        correct: "Ele estudou porque queria passar, então dedicou-se muito.",
+      },
+    ],
+  },
+  {
+    id: "fig-anacoluto",
+    nome: "Anacoluto",
+    cor: "#4A4E8B",
+    dica: "Quebra brusca na estrutura da frase, deixando um termo 'solto'.",
+    teoria: "O anacoluto é uma quebra brusca na estrutura sintática da frase, deixando um termo 'solto', sem função sintática definida — comum na fala espontânea: 'eu, parece que vou chegar atrasado'.",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "O anacoluto é a figura que:",
+        options: [
+          "quebra bruscamente a estrutura da frase, deixando um termo 'solto'",
+          "repete a mesma palavra em versos seguidos",
+          "omite um termo facilmente identificável",
+          "compara dois elementos usando 'como'",
+        ],
+        correct: "quebra bruscamente a estrutura da frase, deixando um termo 'solto'",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases contém um anacoluto?",
+        options: [
+          "Eu, parece que vou chegar atrasado.",
+          "Eu acho que vou chegar atrasado.",
+          "Eu vou chegar atrasado hoje.",
+          "Eu sempre chego atrasado.",
+        ],
+        correct: "Eu, parece que vou chegar atrasado.",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na palavra que fica 'solta', sem função sintática clara (anacoluto) nesta frase:",
+        words: ["Meu", "pai", "ele", "nunca", "erra", "o", "caminho"],
+        correct: "pai",
+      },
+      {
+        type: "mcq",
+        prompt: "O anacoluto é muito comum:",
+        options: [
+          "na fala espontânea, quando a pessoa muda o rumo da frase no meio dela",
+          "em textos jurídicos formais",
+          "em manuais técnicos",
+          "em bulas de remédio",
+        ],
+        correct: "na fala espontânea, quando a pessoa muda o rumo da frase no meio dela",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete formando um anacoluto (frase que muda de rumo):",
+        sentence: "Essa prova, eu não sei se vou ____ terminar a tempo.",
+        options: ["conseguir", "sobre", "porque", "ontem"],
+        correct: "conseguir",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada frase:",
+        buckets: ["Anacoluto (estrutura quebrada)", "Estrutura completa"],
+        items: [
+          { word: "Essa casa, não sei se vou conseguir comprar.", bucket: "Anacoluto (estrutura quebrada)" },
+          { word: "Não sei se vou conseguir comprar essa casa.", bucket: "Estrutura completa" },
+          { word: "Minha mãe, ela sempre chega cedo.", bucket: "Anacoluto (estrutura quebrada)" },
+          { word: "Minha mãe sempre chega cedo.", bucket: "Estrutura completa" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases é um anacoluto?",
+        options: [
+          "O professor, ele explicou tudo de novo.",
+          "O professor explicou tudo de novo.",
+          "O professor explicou a matéria.",
+          "O professor voltou a explicar a matéria.",
+        ],
+        correct: "O professor, ele explicou tudo de novo.",
+      },
+      {
+        type: "mcq",
+        prompt: "Na escrita formal, o anacoluto costuma ser visto como:",
+        options: [
+          "um desvio da norma culta, mais aceitável na fala do que na escrita",
+          "a forma mais correta de escrever",
+          "obrigatório em redações escolares",
+          "uma figura de som",
+        ],
+        correct: "um desvio da norma culta, mais aceitável na fala do que na escrita",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na palavra que fica 'solta', sem função sintática clara (anacoluto) nesta frase:",
+        words: ["A", "vizinha", "ela", "reclama", "de", "tudo"],
+        correct: "vizinha",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases NÃO é um anacoluto?",
+        options: [
+          "Meu carro, precisa levar pra revisão.",
+          "Meu carro precisa ir para a revisão.",
+          "Essa comida, não sei se vou aguentar comer.",
+          "O filme, eu acho que já assisti.",
+        ],
+        correct: "Meu carro precisa ir para a revisão.",
+      },
+    ],
+  },
+  {
+    id: "fig-pleonasmo",
+    nome: "Pleonasmo",
+    cor: "#FF8A5B",
+    dica: "Repetição de uma ideia já expressa, usada de propósito pra reforçar.",
+    teoria: "O pleonasmo é a repetição de uma palavra ou ideia já expressa, usada intencionalmente para reforçar o sentido (diferente do pleonasmo vicioso, que é considerado erro): 'vi com meus próprios olhos', 'subir para cima' usado estilisticamente.",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "O pleonasmo (como figura de linguagem) é:",
+        options: [
+          "a repetição intencional de uma ideia já expressa, para reforçar o sentido",
+          "a omissão de um termo facilmente identificável",
+          "a inversão da ordem das palavras",
+          "a mistura de sensações de sentidos diferentes",
+        ],
+        correct: "a repetição intencional de uma ideia já expressa, para reforçar o sentido",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas expressões é um pleonasmo clássico usado como reforço estilístico?",
+        options: ["vi com meus próprios olhos", "vi o filme ontem", "vi de longe", "vi rapidamente"],
+        correct: "vi com meus próprios olhos",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na palavra redundante (pleonasmo) nesta frase:",
+        words: ["Ele", "subiu", "para", "cima", "correndo"],
+        correct: "cima",
+      },
+      {
+        type: "mcq",
+        prompt: "O pleonasmo, como figura de linguagem (não como erro), serve para:",
+        options: [
+          "dar ênfase e reforçar uma ideia de propósito",
+          "encurtar a frase ao máximo",
+          "confundir o leitor",
+          "suavizar uma má notícia",
+        ],
+        correct: "dar ênfase e reforçar uma ideia de propósito",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete formando um pleonasmo de ênfase:",
+        sentence: "Ela chorou lágrimas de ____ verdadeira dor.",
+        options: ["puro", "sobre", "porque", "muito"],
+        correct: "puro",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada expressão:",
+        buckets: ["Pleonasmo (repetição de reforço)", "Sem repetição"],
+        items: [
+          { word: "entrar para dentro", bucket: "Pleonasmo (repetição de reforço)" },
+          { word: "entrar na sala", bucket: "Sem repetição" },
+          { word: "sair para fora correndo", bucket: "Pleonasmo (repetição de reforço)" },
+          { word: "sair correndo", bucket: "Sem repetição" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas é considerada pleonasmo vicioso (erro, não figura estilística)?",
+        options: ["subir para cima", "vi com meus próprios olhos", "chorei lágrimas de dor", "sorriu um sorriso largo"],
+        correct: "subir para cima",
+      },
+      {
+        type: "mcq",
+        prompt: "A diferença entre pleonasmo (figura) e pleonasmo vicioso (erro) é que o primeiro:",
+        options: [
+          "é usado intencionalmente para dar efeito estilístico",
+          "nunca aparece em textos literários",
+          "é sempre proibido na escrita",
+          "só ocorre com verbos",
+        ],
+        correct: "é usado intencionalmente para dar efeito estilístico",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na palavra redundante (pleonasmo) nesta frase:",
+        words: ["Sorriu", "um", "sorriso", "largo", "e", "sincero"],
+        correct: "sorriso",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases contém um pleonasmo de ênfase?",
+        options: [
+          "Chorei choro de alívio quando soube da notícia.",
+          "Chorei de alívio quando soube da notícia.",
+          "Fiquei aliviado com a notícia.",
+          "A notícia me deixou aliviado.",
+        ],
+        correct: "Chorei choro de alívio quando soube da notícia.",
+      },
+    ],
+  },
+  {
+    id: "fig-silepse",
+    nome: "Silepse",
+    cor: "#4FA88F",
+    dica: "Concordância com a ideia subentendida, não com a palavra explícita.",
+    teoria: "A silepse é a concordância feita com a ideia subentendida, e não com a palavra gramatical explícita. Pode ser de gênero, número ou pessoa: 'Vossa Excelência está preocupado' (concorda com o sexo da pessoa, não com o pronome de tratamento); 'a maioria dos alunos chegaram atrasados' (concorda com a ideia de plural).",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "A silepse é a figura em que a concordância é feita:",
+        options: [
+          "com a ideia subentendida, não com a palavra gramatical explícita",
+          "sempre no singular, nunca no plural",
+          "só com verbos, nunca com adjetivos",
+          "de forma aleatória, sem nenhuma lógica",
+        ],
+        correct: "com a ideia subentendida, não com a palavra gramatical explícita",
+      },
+      {
+        type: "mcq",
+        prompt: "Em 'Vossa Excelência está preocupado', a concordância no masculino é feita com:",
+        options: [
+          "o sexo da pessoa a quem se fala, não com o pronome de tratamento (que é gramaticalmente feminino)",
+          "a palavra 'Excelência', que é masculina",
+          "um erro de português",
+          "a posição da palavra na frase",
+        ],
+        correct: "o sexo da pessoa a quem se fala, não com o pronome de tratamento (que é gramaticalmente feminino)",
+      },
+      {
+        type: "mcq",
+        prompt: "'A maioria dos alunos chegaram atrasados' é um exemplo de silepse de:",
+        options: ["número (concorda com a ideia de plural)", "gênero", "pessoa", "não é silepse"],
+        correct: "número (concorda com a ideia de plural)",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete com a concordância por silepse (ideia de plural):",
+        sentence: "Grande parte dos convidados já ____ embora.",
+        options: ["foram", "foi", "sobre", "porque"],
+        correct: "foram",
+      },
+      {
+        type: "mcq",
+        prompt: "A silepse de pessoa ocorre, por exemplo, quando:",
+        options: [
+          "'nós' é usado mas o verbo concorda na 1ª pessoa mesmo o sujeito parecendo de 3ª (ex: 'os brasileiros somos alegres')",
+          "o verbo concorda sempre na 3ª pessoa",
+          "não existe concordância nenhuma na frase",
+          "só pronomes de tratamento mudam de gênero",
+        ],
+        correct: "'nós' é usado mas o verbo concorda na 1ª pessoa mesmo o sujeito parecendo de 3ª (ex: 'os brasileiros somos alegres')",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada frase:",
+        buckets: ["Silepse (concorda com a ideia)", "Concordância direta (com a palavra)"],
+        items: [
+          { word: "A maioria dos jogadores marcaram gols.", bucket: "Silepse (concorda com a ideia)" },
+          { word: "A maioria dos jogadores marcou gols.", bucket: "Concordância direta (com a palavra)" },
+          { word: "Vossa Senhoria está cansada (falando com uma mulher).", bucket: "Silepse (concorda com a ideia)" },
+          { word: "A senhora está cansada.", bucket: "Concordância direta (com a palavra)" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases contém silepse de gênero?",
+        options: [
+          "Vossa Majestade parece preocupado, majestade (dito a um rei).",
+          "O rei parece preocupado.",
+          "A rainha parece preocupada.",
+          "Os reis parecem preocupados.",
+        ],
+        correct: "Vossa Majestade parece preocupado, majestade (dito a um rei).",
+      },
+      {
+        type: "mcq",
+        prompt: "A silepse existe porque a língua às vezes prioriza:",
+        options: [
+          "o sentido lógico da frase, mesmo quando ele não bate com a forma gramatical",
+          "sempre a forma gramatical explícita, ignorando o sentido",
+          "a ordem alfabética das palavras",
+          "a quantidade de sílabas da frase",
+        ],
+        correct: "o sentido lógico da frase, mesmo quando ele não bate com a forma gramatical",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete com a concordância por silepse (ideia de plural):",
+        sentence: "O casal de namorados ____ discutindo há uma hora.",
+        options: ["estavam", "estava", "sobre", "porque"],
+        correct: "estavam",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas é silepse de número?",
+        options: [
+          "A galera já foram embora da festa.",
+          "A galera já foi embora da festa.",
+          "As pessoas já foram embora da festa.",
+          "Os convidados já foram embora da festa.",
+        ],
+        correct: "A galera já foram embora da festa.",
+      },
+    ],
+  },
+  {
+    id: "fig-anafora",
+    nome: "Anáfora",
+    cor: "#813017",
+    dica: "Repetição de uma palavra no início de frases ou versos sucessivos.",
+    teoria: "A anáfora é a repetição de uma palavra ou expressão no início de versos, frases ou orações sucessivas, criando efeito rítmico e enfático: 'tudo é silêncio, tudo é calma, tudo é vazio'.",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "A anáfora é a figura que:",
+        options: [
+          "repete uma palavra no início de frases ou versos sucessivos",
+          "omite um termo facilmente identificável",
+          "inverte a ordem das palavras da frase",
+          "une ideias contraditórias num sentido novo",
+        ],
+        correct: "repete uma palavra no início de frases ou versos sucessivos",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases contém uma anáfora?",
+        options: [
+          "Tudo é silêncio, tudo é calma, tudo é vazio.",
+          "Havia silêncio, calma e vazio ao redor.",
+          "O lugar estava silencioso, calmo e vazio.",
+          "Silêncio, calma, vazio: assim era o lugar.",
+        ],
+        correct: "Tudo é silêncio, tudo é calma, tudo é vazio.",
+      },
+      {
+        type: "classify",
+        prompt: "Clique em uma das ocorrências da palavra repetida no início das frases (anáfora):",
+        words: ["Tudo", "passa", "tudo", "muda", "tudo", "se", "transforma"],
+        correct: "Tudo",
+      },
+      {
+        type: "mcq",
+        prompt: "O efeito da anáfora costuma ser de:",
+        options: [
+          "ritmo e ênfase, martelando a mesma ideia",
+          "confusão, por misturar sentidos diferentes",
+          "economia extrema, cortando palavras",
+          "suavização de uma má notícia",
+        ],
+        correct: "ritmo e ênfase, martelando a mesma ideia",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete repetindo a palavra no início da nova frase (anáfora):",
+        sentence: "Amar é dar-se por inteiro. ____ é esquecer de si mesmo.",
+        options: ["Amar", "Sobre", "Porque", "Ontem"],
+        correct: "Amar",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada trecho:",
+        buckets: ["Anáfora (repete no início)", "Sem repetição no início"],
+        items: [
+          { word: "Chove sobre a cidade. Chove sobre o campo. Chove sem parar.", bucket: "Anáfora (repete no início)" },
+          { word: "Chove sobre a cidade, o campo e as montanhas.", bucket: "Sem repetição no início" },
+          { word: "Era noite. Era frio. Era hora de partir.", bucket: "Anáfora (repete no início)" },
+          { word: "Era uma noite fria, hora de partir.", bucket: "Sem repetição no início" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases é um exemplo de anáfora?",
+        options: [
+          "Só o amor liberta. Só o amor cura. Só o amor transforma.",
+          "O amor liberta, cura e transforma.",
+          "O amor é libertador, curativo e transformador.",
+          "Liberta, cura e transforma: assim é o amor.",
+        ],
+        correct: "Só o amor liberta. Só o amor cura. Só o amor transforma.",
+      },
+      {
+        type: "mcq",
+        prompt: "A anáfora é muito usada em:",
+        options: ["discursos e poemas, para criar força retórica", "bulas de remédio", "manuais técnicos", "listas telefônicas"],
+        correct: "discursos e poemas, para criar força retórica",
+      },
+      {
+        type: "classify",
+        prompt: "Clique em uma das ocorrências da palavra repetida no início das frases (anáfora):",
+        words: ["Nunca", "desisti", "nunca", "chorei", "nunca", "me", "arrependi"],
+        correct: "Nunca",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases NÃO é uma anáfora?",
+        options: [
+          "O dia amanheceu claro, frio e silencioso.",
+          "Foi difícil. Foi longo. Foi necessário.",
+          "Ninguém sabia. Ninguém contou. Ninguém se importou.",
+          "Sempre esperei. Sempre acreditei. Sempre voltei.",
+        ],
+        correct: "O dia amanheceu claro, frio e silencioso.",
+      },
+    ],
+  },
+];
+
+const TOPICS_FIGURAS_SOM = [
+  {
+    id: "fig-aliteracao",
+    nome: "Aliteração",
+    cor: "#D6336C",
+    dica: "Repetição de sons consonantais no início ou ao longo das palavras.",
+    teoria: "A aliteração é a repetição de sons consonantais no início ou ao longo das palavras: 'o rato roeu a roupa do rei de Roma' repete o som de 'r' várias vezes, criando um efeito sonoro marcante.",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "A aliteração é a figura que:",
+        options: [
+          "repete sons consonantais no início ou ao longo das palavras",
+          "repete sons vocálicos numa mesma frase",
+          "aproxima palavras de sons parecidos mas significados diferentes",
+          "imita um som real através de uma palavra",
+        ],
+        correct: "repete sons consonantais no início ou ao longo das palavras",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases contém uma aliteração?",
+        options: [
+          "O rato roeu a roupa do rei de Roma.",
+          "O gato dormiu o dia inteiro.",
+          "A menina cantou uma canção bonita.",
+          "O carro azul passou pela rua.",
+        ],
+        correct: "O rato roeu a roupa do rei de Roma.",
+      },
+      {
+        type: "classify",
+        prompt: "Clique numa das palavras que repetem o som consonantal (aliteração) nesta frase:",
+        words: ["Peter", "Pipper", "pegou", "pimentas", "picantes"],
+        correct: "picantes",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual som consonantal se repete em 'Sua sombra sussurra segredos'?",
+        options: ["s", "r", "t", "m"],
+        correct: "s",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete criando uma aliteração com o som de 'f':",
+        sentence: "A fera feroz fugiu ____ pela floresta.",
+        options: ["furtiva", "sobre", "porque", "ontem"],
+        correct: "furtiva",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada frase:",
+        buckets: ["Tem aliteração (sons consonantais repetidos)", "Sem aliteração marcante"],
+        items: [
+          { word: "Ó vozes veladas, veludosas vozes.", bucket: "Tem aliteração (sons consonantais repetidos)" },
+          { word: "As vozes na sala estavam altas.", bucket: "Sem aliteração marcante" },
+          { word: "Terra tremendo, trovões trovejando.", bucket: "Tem aliteração (sons consonantais repetidos)" },
+          { word: "A terra tremeu durante o temporal.", bucket: "Sem aliteração marcante" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "A aliteração é muito usada em:",
+        options: ["trava-línguas e poemas, pelo efeito sonoro marcante", "manuais técnicos", "bulas de remédio", "listas de compras"],
+        correct: "trava-línguas e poemas, pelo efeito sonoro marcante",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases tem aliteração do som 'c'?",
+        options: [
+          "Caça, caçador, caçava cachorro.",
+          "O cachorro corria no quintal.",
+          "A caça foi difícil naquele dia.",
+          "O caçador voltou cansado.",
+        ],
+        correct: "Caça, caçador, caçava cachorro.",
+      },
+      {
+        type: "classify",
+        prompt: "Clique numa das palavras que repetem o som consonantal (aliteração) nesta frase:",
+        words: ["Bruno", "brincava", "bravo", "no", "barro"],
+        correct: "bravo",
+      },
+      {
+        type: "mcq",
+        prompt: "O que diferencia a aliteração da assonância?",
+        options: [
+          "a aliteração repete consoantes; a assonância repete vogais",
+          "a aliteração só existe em prosa",
+          "não existe diferença nenhuma",
+          "a aliteração precisa rimar no final dos versos",
+        ],
+        correct: "a aliteração repete consoantes; a assonância repete vogais",
+      },
+    ],
+  },
+  {
+    id: "fig-assonancia",
+    nome: "Assonância",
+    cor: "#FF2B6F",
+    dica: "Repetição de sons vocálicos.",
+    teoria: "A assonância é a repetição de sons vocálicos: 'a cada canto um som, a cada passo um encanto' repete o som da vogal 'a' diversas vezes ao longo da frase.",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "A assonância é a figura que:",
+        options: [
+          "repete sons vocálicos numa mesma frase",
+          "repete sons consonantais no início das palavras",
+          "imita um som real através de uma palavra",
+          "aproxima palavras com sons parecidos, mas significados diferentes",
+        ],
+        correct: "repete sons vocálicos numa mesma frase",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases contém uma assonância marcante do som 'a'?",
+        options: [
+          "A cada canto um som, a cada passo um encanto.",
+          "O rato roeu a roupa do rei.",
+          "O silêncio tomou conta da sala.",
+          "As flores murcharam no vaso.",
+        ],
+        correct: "A cada canto um som, a cada passo um encanto.",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual vogal se repete com destaque em 'Sozinho, o menino sorrio'?",
+        options: ["o", "a", "e", "u"],
+        correct: "o",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete criando uma assonância com o som de 'i':",
+        sentence: "Vim, vi, vivi e sorri ____ .",
+        options: ["ali", "sobre", "porque", "então"],
+        correct: "ali",
+      },
+      {
+        type: "classify",
+        prompt: "Clique numa das palavras que se destaca pelo som vocálico repetido (assonância) nesta frase:",
+        words: ["Sua", "sombra", "escura", "assusta", "muita", "gente"],
+        correct: "assusta",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada frase:",
+        buckets: ["Tem assonância (vogais repetidas)", "Sem assonância marcante"],
+        items: [
+          { word: "A cada casa, a saudade se alastra.", bucket: "Tem assonância (vogais repetidas)" },
+          { word: "A casa ficava no fim da rua.", bucket: "Sem assonância marcante" },
+          { word: "Ninguém dorme, ninguém sonha, ninguém vive.", bucket: "Tem assonância (vogais repetidas)" },
+          { word: "Ninguém apareceu na festa ontem.", bucket: "Sem assonância marcante" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "A assonância é muito explorada em:",
+        options: ["poesia, pela musicalidade que cria", "textos jurídicos", "manuais de instalação", "relatórios técnicos"],
+        correct: "poesia, pela musicalidade que cria",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases tem assonância do som 'e'?",
+        options: [
+          "Ele vive triste e sem sede de viver.",
+          "O carro azul passou correndo.",
+          "A menina comprou um sapato novo.",
+          "O sol brilhou o dia inteiro.",
+        ],
+        correct: "Ele vive triste e sem sede de viver.",
+      },
+      {
+        type: "mcq",
+        prompt: "A diferença entre assonância e rima é que a assonância:",
+        options: [
+          "pode ocorrer em qualquer posição da palavra, não só no final do verso",
+          "só existe no final dos versos",
+          "não tem relação nenhuma com sons",
+          "é exclusiva da prosa",
+        ],
+        correct: "pode ocorrer em qualquer posição da palavra, não só no final do verso",
+      },
+      {
+        type: "classify",
+        prompt: "Clique numa das palavras que se destaca pelo som vocálico repetido (assonância) nesta frase:",
+        words: ["Muitas", "luas", "surgem", "e", "fogem", "no", "céu"],
+        correct: "surgem",
+      },
+    ],
+  },
+  {
+    id: "fig-paronomasia",
+    nome: "Paronomásia",
+    cor: "#4A4E8B",
+    dica: "Aproxima palavras com sons parecidos, mas significados diferentes.",
+    teoria: "A paronomásia aproxima palavras com sons parecidos, mas significados diferentes (parônimos): 'o cavaleiro, muito cavalheiro, ajudou a todos' — 'cavaleiro' e 'cavalheiro' soam parecido, mas têm sentidos distintos.",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "A paronomásia é a figura que:",
+        options: [
+          "aproxima palavras de sons parecidos, mas significados diferentes",
+          "repete o mesmo som consonantal várias vezes",
+          "imita um som real através de uma palavra",
+          "repete uma palavra no início de frases seguidas",
+        ],
+        correct: "aproxima palavras de sons parecidos, mas significados diferentes",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas frases contém uma paronomásia?",
+        options: [
+          "O cavaleiro, muito cavalheiro, ajudou a todos.",
+          "O cavaleiro montou o cavalo rapidamente.",
+          "O cavalheiro cumprimentou a todos com respeito.",
+          "O cavalo corria solto pelo campo.",
+        ],
+        correct: "O cavaleiro, muito cavalheiro, ajudou a todos.",
+      },
+      {
+        type: "mcq",
+        prompt: "'Cavaleiro' e 'cavalheiro' são consideradas, uma em relação à outra, palavras:",
+        options: ["parônimas (som parecido, sentido diferente)", "sinônimas (mesmo sentido)", "antônimas (sentido oposto)", "homônimas perfeitas (mesmo som e escrita)"],
+        correct: "parônimas (som parecido, sentido diferente)",
+      },
+      {
+        type: "classify",
+        prompt: "Clique numa das duas palavras parecidas em som, mas diferentes em sentido (paronomásia), nesta frase:",
+        words: ["Ele", "não", "compra", "briga", "por", "nada"],
+        correct: "compra",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete com o parônimo correto (paronomásia com 'sessão'/'cessão'):",
+        sentence: "A ____ de cinema começou atrasada.",
+        options: ["sessão", "cessão", "sobre", "porque"],
+        correct: "sessão",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada par de palavras:",
+        buckets: ["Parônimas (som parecido, sentido diferente)", "Sinônimas (mesmo sentido)"],
+        items: [
+          { word: "comprimento e cumprimento", bucket: "Parônimas (som parecido, sentido diferente)" },
+          { word: "feliz e contente", bucket: "Sinônimas (mesmo sentido)" },
+          { word: "emergir e imergir", bucket: "Parônimas (som parecido, sentido diferente)" },
+          { word: "rápido e veloz", bucket: "Sinônimas (mesmo sentido)" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "O jogo de palavras 'trair é um traço de quem trai' explora:",
+        options: ["paronomásia (semelhança sonora entre as palavras)", "onomatopeia", "aliteração pura", "assonância pura"],
+        correct: "paronomásia (semelhança sonora entre as palavras)",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destes pares é um exemplo clássico de parônimos usados em paronomásia?",
+        options: ["comprimento / cumprimento", "feliz / alegre", "grande / enorme", "rápido / veloz"],
+        correct: "comprimento / cumprimento",
+      },
+      {
+        type: "mcq",
+        prompt: "A paronomásia costuma criar um efeito de:",
+        options: ["jogo sonoro e trocadilho, chamando atenção pelo som parecido", "silêncio e pausa", "exagero explícito", "suavização de uma notícia"],
+        correct: "jogo sonoro e trocadilho, chamando atenção pelo som parecido",
+      },
+      {
+        type: "classify",
+        prompt: "Clique numa das duas palavras parecidas em som, mas diferentes em sentido (paronomásia), nesta frase:",
+        words: ["Não", "confundo", "descrição", "com", "discrição"],
+        correct: "descrição",
+      },
+    ],
+  },
+  {
+    id: "fig-onomatopeia",
+    nome: "Onomatopeia",
+    cor: "#FF8A5B",
+    dica: "Palavra criada para imitar um som real.",
+    teoria: "A onomatopeia é uma palavra criada para imitar um som real: 'tic-tac' imita o som do relógio, 'miau' imita o som do gato, 'boom' imita uma explosão.",
+    exercicios: [
+      {
+        type: "mcq",
+        prompt: "A onomatopeia é a figura que:",
+        options: [
+          "cria uma palavra para imitar um som real",
+          "repete sons consonantais numa frase",
+          "aproxima palavras de sentido oposto",
+          "omite um termo facilmente identificável",
+        ],
+        correct: "cria uma palavra para imitar um som real",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas palavras é uma onomatopeia?",
+        options: ["miau", "gato", "felino", "bichano"],
+        correct: "miau",
+      },
+      {
+        type: "mcq",
+        prompt: "'Tic-tac, tic-tac, o relógio não parava' imita o som:",
+        options: ["do relógio", "da chuva", "do vento", "de uma porta"],
+        correct: "do relógio",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na onomatopeia (palavra que imita um som) nesta frase:",
+        words: ["A", "porta", "bateu", "com", "um", "toc", "forte"],
+        correct: "toc",
+      },
+      {
+        type: "fillblank",
+        prompt: "Complete com a onomatopeia adequada:",
+        sentence: "A bomba explodiu com um ____ ensurdecedor.",
+        options: ["bum", "sobre", "porque", "ontem"],
+        correct: "bum",
+      },
+      {
+        type: "dragdrop",
+        prompt: "Classifique cada palavra:",
+        buckets: ["Onomatopeia (imita som)", "Palavra comum (não imita som)"],
+        items: [
+          { word: "plim", bucket: "Onomatopeia (imita som)" },
+          { word: "sino", bucket: "Palavra comum (não imita som)" },
+          { word: "au au", bucket: "Onomatopeia (imita som)" },
+          { word: "cachorro", bucket: "Palavra comum (não imita som)" },
+        ],
+      },
+      {
+        type: "mcq",
+        prompt: "Onomatopeias são muito usadas em:",
+        options: ["histórias em quadrinhos, pra representar sons visualmente", "contratos jurídicos", "manuais de instalação", "bulas de remédio"],
+        correct: "histórias em quadrinhos, pra representar sons visualmente",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas é uma onomatopeia do som da água pingando?",
+        options: ["plim plim", "au au", "miau", "cocoricó"],
+        correct: "plim plim",
+      },
+      {
+        type: "classify",
+        prompt: "Clique na onomatopeia (palavra que imita um som) nesta frase:",
+        words: ["O", "trovão", "estourou", "num", "bum", "gigantesco"],
+        correct: "bum",
+      },
+      {
+        type: "mcq",
+        prompt: "Qual destas é uma onomatopeia do canto do galo?",
+        options: ["cocoricó", "miau", "au au", "muuu"],
+        correct: "cocoricó",
+      },
+    ],
+  },
+];
+
+
 const NIVEIS = [
   { id: 1, titulo: "Classes de Palavras", subtitulo: "10 tópicos" },
   { id: 2, titulo: "Sintaxe da Oração Simples", subtitulo: "13 tópicos" },
   { id: 3, titulo: "Orações Coordenadas", subtitulo: "6 tópicos" },
   { id: 4, titulo: "Orações Subordinadas", subtitulo: "17 tópicos" },
+  // Módulos 5-8: trilha bônus "Figuras de Linguagem" — não entram no
+  // controle de série/turma (modulosLiberados), ficam disponíveis pra todo
+  // mundo através do botão "Trilha Bônus" na tela principal.
+  { id: 5, titulo: "Figuras de Palavras", subtitulo: "6 tópicos" },
+  { id: 6, titulo: "Figuras de Pensamento", subtitulo: "9 tópicos" },
+  { id: 7, titulo: "Figuras de Sintaxe", subtitulo: "9 tópicos" },
+  { id: 8, titulo: "Figuras de Som", subtitulo: "4 tópicos" },
 ];
+const NIVEIS_BONUS_IDS = [5, 6, 7, 8];
 
 // Turmas atuais e o módulo (nível) que cada série pode acessar.
 // Módulo 1 = Classes de Palavras · Módulo 2 = Sintaxe da Oração Simples
@@ -3836,9 +6466,22 @@ const TOPICOS_POR_NIVEL = {
   2: TOPICS_NIVEL2,
   3: TOPICS_NIVEL3,
   4: TOPICS_NIVEL4,
+  5: TOPICS_FIGURAS_PALAVRAS,
+  6: TOPICS_FIGURAS_PENSAMENTO,
+  7: TOPICS_FIGURAS_SINTAXE,
+  8: TOPICS_FIGURAS_SOM,
 };
 
-const TODOS_TOPICOS = [...TOPICS, ...TOPICS_NIVEL2, ...TOPICS_NIVEL3, ...TOPICS_NIVEL4];
+const TODOS_TOPICOS = [
+  ...TOPICS,
+  ...TOPICS_NIVEL2,
+  ...TOPICS_NIVEL3,
+  ...TOPICS_NIVEL4,
+  ...TOPICS_FIGURAS_PALAVRAS,
+  ...TOPICS_FIGURAS_PENSAMENTO,
+  ...TOPICS_FIGURAS_SINTAXE,
+  ...TOPICS_FIGURAS_SOM,
+];
 
 // Dá um id estável a cada questão-base (id = tópico + posição no array), sem
 // precisar editar as 460 questões uma a uma no código. Isso permite que o
@@ -4327,7 +6970,29 @@ function achievementsParaTurma(turma) {
     condicao: (p) => base.every((a) => a.condicao(p)),
   };
 
-  const lista = [...base, colecionadorSupremo];
+  // Selos da trilha bônus (Figuras de Linguagem) — disponíveis pra qualquer
+  // turma, já que a trilha bônus não é restrita por série. Ficam FORA de
+  // "base" de propósito: não queremos que "Colecionador Supremo" (que exige
+  // TODOS os itens de "base") passe a depender também da trilha bônus.
+  const bonusAchievements = [
+    ...NIVEIS_BONUS_IDS.map((moduloId) => ({
+      id: `bonus-mestre-${moduloId}`,
+      nome: `Mestre em ${nomeDoModulo(moduloId)}`,
+      icone: "🎁",
+      cor: "#FF8A5B",
+      condicao: (p) => topicosDoModulo(moduloId).every((t) => p.concluidos.includes(t.id)),
+    })),
+    {
+      id: "colecionador-figuras",
+      nome: "Colecionador de Figuras",
+      icone: "🎭",
+      cor: "#4A4E8B",
+      condicao: (p) =>
+        NIVEIS_BONUS_IDS.every((moduloId) => !!(p.testesModulo && p.testesModulo[moduloId] && p.testesModulo[moduloId].feito)),
+    },
+  ];
+
+  const lista = [...base, colecionadorSupremo, ...bonusAchievements];
   achievementsCacheParaTurma[chave] = lista;
   return lista;
 }
@@ -5128,11 +7793,18 @@ function Trilha({
   onAbrirTeste,
   subtrilhas,
   custom,
+  bonusMode,
+  onAbrirBonus,
+  onVoltarBonus,
 }) {
   const achievements = achievementsParaTurma(progress.turma);
   const conquistas = achievements.filter((a) => a.condicao(progress)).length;
   const idsPermitidos = modulosLiberados(progress.turma);
-  const niveisVisiveis = NIVEIS.filter((n) => idsPermitidos.includes(n.id));
+  // A trilha principal nunca mostra os módulos bônus (5-8), mesmo no caso raro
+  // de turma não reconhecida liberar "tudo" — eles só aparecem na trilha bônus.
+  const niveisVisiveis = bonusMode
+    ? NIVEIS.filter((n) => NIVEIS_BONUS_IDS.includes(n.id))
+    : NIVEIS.filter((n) => idsPermitidos.includes(n.id) && !NIVEIS_BONUS_IDS.includes(n.id));
 
   function confirmarTrocarAluno() {
     const ok = window.confirm(
@@ -5144,15 +7816,23 @@ function Trilha({
   return (
     <div className="screen trilha">
       <header className="trilha-header">
-        <img src={LOGO_TOBO} alt="" className="trilha-logo" />
+        {bonusMode ? (
+          <button className="btn-x btn-voltar-bonus" onClick={onVoltarBonus} aria-label="Voltar à trilha principal">
+            ←
+          </button>
+        ) : (
+          <img src={LOGO_TOBO} alt="" className="trilha-logo" />
+        )}
         <div className="trilha-titulo-bloco">
-          <h1>Análise em Dia</h1>
+          <h1>{bonusMode ? "🎁 Figuras de Linguagem" : "Análise em Dia"}</h1>
           <p className="trilha-sub">
-            {progress.nome
+            {bonusMode
+              ? "trilha bônus — disponível pra todas as turmas"
+              : progress.nome
               ? `olá, ${progress.nome}${progress.turma ? ` · turma ${progress.turma}` : ""}`
               : "gramática da língua portuguesa"}
           </p>
-          {progress.nome && (
+          {!bonusMode && progress.nome && (
             <button className="link-trocar-aluno" onClick={confirmarTrocarAluno}>
               não é você? trocar de aluno
             </button>
@@ -5177,6 +7857,11 @@ function Trilha({
           📄 Gerar relatório
         </button>
       </div>
+      {!bonusMode && (
+        <button className="chip-acao chip-acao-bonus" onClick={onAbrirBonus}>
+          🎁 Trilha Bônus: Figuras de Linguagem
+        </button>
+      )}
 
       {niveisVisiveis.map((nivel, idxNivel) => {
         const topicosDoNivel = TOPICOS_POR_NIVEL[nivel.id] || [];
@@ -5195,11 +7880,13 @@ function Trilha({
         return (
           <section key={nivel.id} className="nivel-section">
             <div className="nivel-title-row">
-              <span className="nivel-index">Módulo {nivel.id}</span>
+              <div className="nivel-title-topo">
+                <span className="nivel-index">Módulo {nivel.id}</span>
+                <span className="nivel-vidas" title="Vidas restantes deste módulo">
+                  ♥ {vidasRestantesModulo(progress, nivel.id)}/{VIDAS_POR_MODULO}
+                </span>
+              </div>
               <h2>{nivel.titulo}</h2>
-              <span className="nivel-vidas" title="Vidas restantes deste módulo">
-                ♥ {vidasRestantesModulo(progress, nivel.id)}/{VIDAS_POR_MODULO}
-              </span>
             </div>
 
             <div className="node-path">
@@ -6676,8 +9363,11 @@ function App() {
     trocarSenha,
     loaded: customLoaded,
   } = useConteudoProfessor();
-  // trilha | teoria | licao | resultado | colecao | relatorio | professorLogin | professorPanel | testeModulo | resultadoTeste
+  // trilha | trilhaBonus | teoria | licao | resultado | colecao | relatorio | professorLogin | professorPanel | testeModulo | resultadoTeste
   const [view, setView] = useState("trilha");
+  // Lembra se veio da trilha principal ou da trilha bônus, pra voltar pro
+  // lugar certo depois de uma lição/teste/coleção/relatório.
+  const [origemTrilha, setOrigemTrilha] = useState("trilha");
   const [selectedTopicId, setSelectedTopicId] = useState(null);
   const [lastResult, setLastResult] = useState(null);
   const [testeModuloId, setTesteModuloId] = useState(null);
@@ -6771,7 +9461,13 @@ function App() {
   const vidasModuloAtivo = moduloAtivoId ? vidasRestantesModulo(progress, moduloAtivoId) : VIDAS_POR_MODULO;
   const primeiraTentativaAtiva = baseTopic ? ehPrimeiraTentativaTopico(progress, baseTopic.id) : true;
 
+  function navegar(destino) {
+    if (view === "trilha" || view === "trilhaBonus") setOrigemTrilha(view);
+    setView(destino);
+  }
+
   function openTopic(topic) {
+    if (view === "trilha" || view === "trilhaBonus") setOrigemTrilha(view);
     setSelectedTopicId(topic.id);
     setView("teoria");
   }
@@ -6824,7 +9520,7 @@ function App() {
 
   function onModuloZerado() {
     if (moduloAtivoId) zerarModulo(moduloAtivoId);
-    setView("trilha");
+    setView(origemTrilha);
   }
 
   function finishTopic(acertos, total) {
@@ -6863,6 +9559,7 @@ function App() {
   }
 
   function abrirTesteModulo(moduloId) {
+    if (view === "trilha" || view === "trilhaBonus") setOrigemTrilha(view);
     const questoes = gerarQuestoesTesteModulo(moduloId, custom, overridesBase, TAMANHO_TESTE_MODULO);
     setTesteModuloId(moduloId);
     setTesteQuestoes(questoes);
@@ -6902,17 +9599,33 @@ function App() {
         <Trilha
           progress={progress}
           onOpenTopic={openTopic}
-          onOpenProfessor={() => setView("professorLogin")}
-          onOpenColecao={() => setView("colecao")}
-          onOpenRelatorio={() => setView("relatorio")}
+          onOpenProfessor={() => navegar("professorLogin")}
+          onOpenColecao={() => navegar("colecao")}
+          onOpenRelatorio={() => navegar("relatorio")}
           onTrocarAluno={trocarAluno}
           onAbrirTeste={abrirTesteModulo}
           subtrilhas={subtrilhas}
           custom={custom}
+          onAbrirBonus={() => setView("trilhaBonus")}
+        />
+      )}
+      {view === "trilhaBonus" && (
+        <Trilha
+          progress={progress}
+          onOpenTopic={openTopic}
+          onOpenProfessor={() => navegar("professorLogin")}
+          onOpenColecao={() => navegar("colecao")}
+          onOpenRelatorio={() => navegar("relatorio")}
+          onTrocarAluno={trocarAluno}
+          onAbrirTeste={abrirTesteModulo}
+          subtrilhas={subtrilhas}
+          custom={custom}
+          bonusMode
+          onVoltarBonus={() => setView("trilha")}
         />
       )}
       {view === "teoria" && baseTopic && (
-        <TeoriaScreen topic={baseTopic} onStart={comecarTeoria} onExit={() => setView("trilha")} />
+        <TeoriaScreen topic={baseTopic} onStart={comecarTeoria} onExit={() => setView(origemTrilha)} />
       )}
       {view === "licao" && activeTopic && (
         <LicaoScreen
@@ -6920,7 +9633,7 @@ function App() {
           vidasModulo={vidasModuloAtivo}
           primeiraTentativa={primeiraTentativaAtiva}
           onFinish={finishTopic}
-          onExit={() => setView("trilha")}
+          onExit={() => setView(origemTrilha)}
           onEachAnswer={onEachAnswer}
           onPerderVidaModulo={onPerderVidaModulo}
           onModuloZerado={onModuloZerado}
@@ -6931,7 +9644,7 @@ function App() {
           acertos={lastResult.acertos}
           total={lastResult.total}
           xpGanho={lastResult.xpGanho}
-          onContinue={() => setView("trilha")}
+          onContinue={() => setView(origemTrilha)}
         />
       )}
       {view === "testeModulo" && testeQuestoes && (
@@ -6939,22 +9652,22 @@ function App() {
           questoes={testeQuestoes}
           moduloNome={nomeDoModulo(testeModuloId)}
           onFinish={finishTesteModulo}
-          onExit={() => setView("trilha")}
+          onExit={() => setView(origemTrilha)}
         />
       )}
       {view === "resultadoTeste" && lastTesteResult && (
         <ResultadoTesteScreen
           resultado={lastTesteResult}
           onRefazer={() => abrirTesteModulo(testeModuloId)}
-          onContinuar={() => setView("trilha")}
+          onContinuar={() => setView(origemTrilha)}
         />
       )}
-      {view === "colecao" && <ColecaoScreen progress={progress} onExit={() => setView("trilha")} />}
-      {view === "relatorio" && <RelatorioScreen progress={progress} onExit={() => setView("trilha")} />}
+      {view === "colecao" && <ColecaoScreen progress={progress} onExit={() => setView(origemTrilha)} />}
+      {view === "relatorio" && <RelatorioScreen progress={progress} onExit={() => setView(origemTrilha)} />}
       {view === "professorLogin" && (
         <ProfessorLogin
           onSuccess={() => setView("professorPanel")}
-          onExit={() => setView("trilha")}
+          onExit={() => setView(origemTrilha)}
           senhaHash={senhaHash}
         />
       )}
@@ -6968,7 +9681,7 @@ function App() {
           saveSubtrilhas={saveSubtrilhas}
           senhaHash={senhaHash}
           trocarSenha={trocarSenha}
-          onExit={() => setView("trilha")}
+          onExit={() => setView(origemTrilha)}
         />
       )}
       {filaConquistas.length > 0 && <ConquistaToast key={filaConquistas[0].id} conquista={filaConquistas[0]} />}
@@ -7158,9 +9871,9 @@ const CSS = `
   border: 1px solid rgba(255,255,255,0.5);
   box-shadow: 0 8px 28px rgba(129,48,23,0.10);
 }
-.nivel-title-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 14px; }
+.nivel-title-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+.nivel-title-topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .nivel-vidas {
-  margin-left: auto;
   font-size: 12.5px;
   font-weight: 600;
   color: var(--pink, #D6336C);
@@ -7173,6 +9886,7 @@ const CSS = `
   background: rgba(255,255,255,0.55);
   border-radius: 999px;
   padding: 3px 9px;
+  white-space: nowrap;
 }
 .nivel-section h2 {
   font-family: 'Fraunces', serif;
@@ -7753,6 +10467,19 @@ const CSS = `
   font-family: 'JetBrains Mono', monospace;
   font-size: 10.5px;
   color: rgba(129,48,23,0.6);
+}
+.chip-acao-bonus {
+  width: 100%;
+  margin-bottom: 18px;
+  background: linear-gradient(135deg, rgba(255,138,91,0.35), rgba(214,51,108,0.28));
+}
+.btn-voltar-bonus {
+  background: rgba(255,255,255,0.4);
+  border-radius: 999px;
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  flex-shrink: 0;
 }
 
 .colecao-contagem {
