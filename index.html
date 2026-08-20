@@ -493,15 +493,15 @@ const TOPICS = [
       },
       {
         type: "classify",
-        prompt: "Clique no pronome desta frase:",
+        prompt: "Clique em um pronome desta frase:",
         words: ["Você", "viu", "o", "filme", "que", "te", "recomendei"],
-        correct: "Você",
+        correct: ["Você", "que", "te"],
       },
       {
         type: "classify",
-        prompt: "Clique no pronome desta frase:",
+        prompt: "Clique em um pronome desta frase:",
         words: ["Isso", "não", "é", "problema", "meu"],
-        correct: "Isso",
+        correct: ["Isso", "meu"],
       },
       {
         type: "fillblank",
@@ -3844,7 +3844,38 @@ function topicosParaTurma(turma) {
   return TODOS_TOPICOS.filter((t) => idsPermitidos.includes(TOPICO_ID_PARA_NIVEL[t.id]));
 }
 
-const START_HEARTS = 5;
+/* =========================================================================
+   VIDAS POR MÓDULO
+   8 vidas compartilhadas entre todos os tópicos de um módulo. Perde-se uma
+   vida a cada erro na PRIMEIRA tentativa de qualquer questão do módulo
+   (retentativas de tópicos já tentados não consomem vida). Ao zerar, o
+   módulo inteiro é reiniciado (progresso dos tópicos daquele módulo é
+   apagado) e o evento fica registrado em progress.modulosZerados.
+   ========================================================================= */
+const VIDAS_POR_MODULO = 8;
+
+function vidasRestantesModulo(progress, moduloId) {
+  if (!moduloId || !progress || !progress.vidasModulo) return VIDAS_POR_MODULO;
+  const v = progress.vidasModulo[moduloId];
+  return v === undefined || v === null ? VIDAS_POR_MODULO : v;
+}
+
+function topicosDoModulo(moduloId) {
+  return TOPICOS_POR_NIVEL[moduloId] || [];
+}
+
+function nomeDoModulo(moduloId) {
+  const n = NIVEIS.find((n) => n.id === moduloId);
+  return n ? n.titulo : `Módulo ${moduloId}`;
+}
+
+// tentativas === 0 (ou tópico nunca tentado) = primeira tentativa desse tópico
+function ehPrimeiraTentativaTopico(progress, topicId) {
+  const s = progress.estatisticasPorTopico[topicId];
+  return !s || !s.tentativas || s.tentativas === 0;
+}
+
+const START_HEARTS = 5; // não usado mais: vidas agora são por módulo (ver VIDAS_POR_MODULO)
 const TAMANHO_LICAO = 8; // máximo de exercícios sorteados por lição (usa todos se houver menos que isso)
 
 const TOPIC_EMOJI = {
@@ -3911,6 +3942,8 @@ function estadoInicialProgress() {
     ultimoDia: null,
     sequenciaAtual: 0,
     maiorSequencia: 0,
+    vidasModulo: {}, // { [moduloId]: vidas restantes (0-8) }
+    modulosZerados: [], // [{ moduloId, moduloNome, data }] — histórico p/ relatório
   };
 }
 
@@ -4348,6 +4381,19 @@ function DragdropExercise({ ex, onAnswer, locked }) {
     setSelected(null);
   }
 
+  // Devolve a palavra pro grupo de palavras disponíveis (toque numa palavra já
+  // colocada, ou soltar o arraste fora de qualquer grupo) — corrige o travamento
+  // de quem coloca errado sem querer e não conseguia mais mexer.
+  function removeItem(word) {
+    if (locked || checked) return;
+    setPlaced((p) => {
+      const next = { ...p };
+      delete next[word];
+      return next;
+    });
+    setSelected(null);
+  }
+
   function hitTestBucket(clientX, clientY) {
     for (const b of ex.buckets) {
       const el = bucketRefs.current[b];
@@ -4360,7 +4406,7 @@ function DragdropExercise({ ex, onAnswer, locked }) {
     return null;
   }
 
-  function onPointerDown(e, word) {
+  function onPointerDown(e, word, fromBucket) {
     if (locked || checked) return;
     // Evita que o navegador (principalmente em desktop, com mouse) inicie uma
     // seleção de texto ou um drag nativo por baixo do nosso drag customizado.
@@ -4368,6 +4414,7 @@ function DragdropExercise({ ex, onAnswer, locked }) {
     const rect = e.currentTarget.getBoundingClientRect();
     setDrag({
       word,
+      fromBucket: !!fromBucket,
       x: e.clientX,
       y: e.clientY,
       offsetX: e.clientX - rect.left,
@@ -4397,10 +4444,21 @@ function DragdropExercise({ ex, onAnswer, locked }) {
       if (!d) return;
       const moved = Math.hypot(e.clientX - d.startX, e.clientY - d.startY);
       if (moved < 6) {
-        setSelected((prev) => (d.word === prev ? null : d.word));
+        // Toque simples (sem arrastar): numa palavra do grupo, seleciona pra
+        // depois tocar num bucket; numa palavra já colocada, devolve pro grupo.
+        if (d.fromBucket) {
+          removeItem(d.word);
+        } else {
+          setSelected((prev) => (d.word === prev ? null : d.word));
+        }
       } else {
         const bucket = hitTestBucket(e.clientX, e.clientY);
-        if (bucket) placeItem(d.word, bucket);
+        if (bucket) {
+          placeItem(d.word, bucket);
+        } else if (d.fromBucket) {
+          // Arrastou uma palavra já colocada pra fora de qualquer grupo — devolve.
+          removeItem(d.word);
+        }
       }
       setDrag(null);
     }
@@ -4426,7 +4484,8 @@ function DragdropExercise({ ex, onAnswer, locked }) {
     <div>
       <p className="ex-prompt">{ex.prompt}</p>
       <p className="drag-instructions">
-        Arraste a palavra até o grupo certo — ou toque na palavra e depois no grupo.
+        Arraste a palavra até o grupo certo — ou toque na palavra e depois no grupo. Já colocou errado? Toque ou
+        arraste a palavra colocada pra trocar de grupo ou devolvê-la.
       </p>
       <div className="drag-pool">
         {remaining.map((it) => (
@@ -4470,8 +4529,11 @@ function DragdropExercise({ ex, onAnswer, locked }) {
                       key={w}
                       className={
                         "drag-chip placed" +
-                        (checked ? (correct ? " chip-correct" : " chip-wrong") : "")
+                        (checked ? (correct ? " chip-correct" : " chip-wrong") : " chip-movable") +
+                        (drag?.word === w ? " chip-dragging-source" : "")
                       }
+                      style={checked ? undefined : { touchAction: "none" }}
+                      onPointerDown={checked ? undefined : (e) => onPointerDown(e, w, true)}
                     >
                       {w}
                     </span>
@@ -4534,12 +4596,12 @@ function TeoriaScreen({ topic, onStart, onExit }) {
    TELA DE LIÇÃO
    ========================================================================= */
 
-function LicaoScreen({ topic, onFinish, onExit, onEachAnswer, onFail }) {
+function LicaoScreen({ topic, vidasModulo, primeiraTentativa, onFinish, onExit, onEachAnswer, onPerderVidaModulo, onModuloZerado }) {
   const [idx, setIdx] = useState(0);
-  const [hearts, setHearts] = useState(START_HEARTS);
+  const [vidas, setVidas] = useState(vidasModulo); // mirror local p/ feedback imediato; a fonte da verdade é o progress do módulo
   const [feedback, setFeedback] = useState(null);
   const [acertos, setAcertos] = useState(0);
-  const [failed, setFailed] = useState(false);
+  const [zerado, setZerado] = useState(false);
 
   // Sorteia a ordem (e, se houver muitas perguntas — base + as do professor —,
   // sorteia também quais entram) uma única vez, quando a lição começa. Assim
@@ -4557,20 +4619,20 @@ function LicaoScreen({ topic, onFinish, onExit, onEachAnswer, onFail }) {
     onEachAnswer(ex.type, correct);
     if (correct) {
       setAcertos((a) => a + 1);
-    } else {
-      setHearts((h) => {
-        const nh = h - 1;
-        if (nh <= 0) {
-          onFail();
-          setTimeout(() => setFailed(true), 900);
-        }
-        return nh;
-      });
+    } else if (primeiraTentativa) {
+      // Só a primeira tentativa de cada tópico consome vidas do módulo —
+      // repetições servem pra praticar sem risco.
+      const nv = vidas - 1;
+      setVidas(nv);
+      onPerderVidaModulo();
+      if (nv <= 0) {
+        setTimeout(() => setZerado(true), 900);
+      }
     }
   }
 
   function next() {
-    if (hearts <= 0) return;
+    if (zerado) return;
     setFeedback(null);
     if (idx + 1 >= pool.length) {
       onFinish(acertos, pool.length);
@@ -4579,16 +4641,19 @@ function LicaoScreen({ topic, onFinish, onExit, onEachAnswer, onFail }) {
     }
   }
 
-  if (failed) {
+  if (zerado) {
     return (
       <div className="screen center-screen">
         <div className="fail-card">
           <div className="fail-emoji">✕</div>
-          <h2>Sem corações!</h2>
-          <p>Revise a dica do tópico e tente de novo.</p>
+          <h2>Vidas do módulo esgotadas!</h2>
+          <p>
+            Você usou as {VIDAS_POR_MODULO} vidas de <strong>{topic.nome}</strong> e dos outros tópicos deste
+            módulo. Vamos reiniciar o módulo inteiro — revise as dicas com calma antes de tentar de novo.
+          </p>
           <div className="dica-box">{topic.dica}</div>
-          <button className="btn-primary" onClick={onExit}>
-            Voltar à trilha
+          <button className="btn-primary" onClick={onModuloZerado}>
+            Reiniciar módulo
           </button>
         </div>
       </div>
@@ -4610,12 +4675,16 @@ function LicaoScreen({ topic, onFinish, onExit, onEachAnswer, onFail }) {
             }}
           />
         </div>
-        <div className="hearts">
-          {Array.from({ length: START_HEARTS }).map((_, i) => (
-            <span key={i} className={i < hearts ? "heart" : "heart heart-lost"}>
-              ♥
-            </span>
-          ))}
+        <div className="hearts" title={primeiraTentativa ? "Vidas do módulo" : "Prática livre — não gasta vidas"}>
+          {primeiraTentativa ? (
+            Array.from({ length: VIDAS_POR_MODULO }).map((_, i) => (
+              <span key={i} className={i < vidas ? "heart" : "heart heart-lost"}>
+                ♥
+              </span>
+            ))
+          ) : (
+            <span className="hearts-pratica">🔁 Prática livre</span>
+          )}
         </div>
       </div>
 
@@ -4743,6 +4812,9 @@ function Trilha({ progress, onOpenTopic, onOpenProfessor, onOpenColecao, onOpenR
             <div className="nivel-title-row">
               <span className="nivel-index">Módulo {nivel.id}</span>
               <h2>{nivel.titulo}</h2>
+              <span className="nivel-vidas" title="Vidas restantes deste módulo">
+                ♥ {vidasRestantesModulo(progress, nivel.id)}/{VIDAS_POR_MODULO}
+              </span>
             </div>
 
             <div className="node-path">
@@ -4919,6 +4991,7 @@ function RelatorioScreen({ progress, onExit }) {
         })`
     );
   const conquistas = achievementsParaTurma(progress.turma).filter((a) => a.condicao(progress)).length;
+  const modulosZerados = progress.modulosZerados || [];
 
   const texto = [
     `Relatório de progresso — ${progress.nome || "Aluno(a)"}${progress.turma ? ` (${progress.turma})` : ""}`,
@@ -4933,6 +5006,11 @@ function RelatorioScreen({ progress, onExit }) {
     dificuldades.length
       ? `Dificuldades (1ª tentativa): ${dificuldades.join(", ")}`
       : "Dificuldades (1ª tentativa): nenhuma dificuldade identificada até agora",
+    modulosZerados.length
+      ? `\nMódulos reiniciados por vidas esgotadas: ${modulosZerados
+          .map((m) => `${m.moduloNome} (${new Date(m.data).toLocaleDateString("pt-BR")})`)
+          .join(", ")}`
+      : "",
   ].join("\n");
 
   async function copiar() {
@@ -5100,6 +5178,29 @@ function ProfessorPanel({ custom, onSave, onExit }) {
   const [erroRelatorios, setErroRelatorios] = useState("");
   const [filtroTurma, setFiltroTurma] = useState("todas");
   const [ordenarPor, setOrdenarPor] = useState("nome");
+  const [confirmandoExcluir, setConfirmandoExcluir] = useState(null); // chave do relatório pendente de confirmação
+  const [excluindoRelatorio, setExcluindoRelatorio] = useState(false);
+
+  const chaveRelatorio = (r) => `${r.nome || ""}__${r.turma || ""}__${r.data || ""}`;
+
+  const excluirRelatorio = useCallback(async (relatorio) => {
+    setExcluindoRelatorio(true);
+    setErroRelatorios("");
+    try {
+      const res = await window.storage.get("relatorios-alunos", true);
+      const lista = res && res.value ? JSON.parse(res.value) : [];
+      const chaveAlvo = chaveRelatorio(relatorio);
+      const listaNova = (Array.isArray(lista) ? lista : []).filter(
+        (r) => chaveRelatorio(r) !== chaveAlvo
+      );
+      await window.storage.set("relatorios-alunos", JSON.stringify(listaNova), true);
+      setRelatorios(listaNova);
+    } catch {
+      setErroRelatorios("Não foi possível excluir o relatório. Tente novamente.");
+    }
+    setExcluindoRelatorio(false);
+    setConfirmandoExcluir(null);
+  }, []);
 
   const buscarRelatorios = useCallback(async () => {
     setCarregandoRelatorios(true);
@@ -5334,7 +5435,10 @@ function ProfessorPanel({ custom, onSave, onExit }) {
               }
               return new Date(b.data) - new Date(a.data);
             });
-            return relatoriosOrdenados.map((r, i) => (
+            return relatoriosOrdenados.map((r, i) => {
+                const chave = chaveRelatorio(r);
+                const confirmando = confirmandoExcluir === chave;
+                return (
                 <div className="relatorio-item" key={i}>
                   <div className="relatorio-item-header">
                     <strong>
@@ -5344,8 +5448,37 @@ function ProfessorPanel({ custom, onSave, onExit }) {
                     <span>{new Date(r.data).toLocaleString("pt-BR")}</span>
                   </div>
                   <pre className="relatorio-texto">{r.texto}</pre>
+                  {confirmando ? (
+                    <div className="relatorio-confirmar-excluir">
+                      <span>Excluir este relatório? Essa ação não pode ser desfeita.</span>
+                      <div className="relatorio-confirmar-botoes">
+                        <button
+                          className="btn-secundario"
+                          onClick={() => setConfirmandoExcluir(null)}
+                          disabled={excluindoRelatorio}
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          className="btn-excluir"
+                          onClick={() => excluirRelatorio(r)}
+                          disabled={excluindoRelatorio}
+                        >
+                          {excluindoRelatorio ? "Excluindo…" : "Sim, excluir"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      className="btn-excluir-link"
+                      onClick={() => setConfirmandoExcluir(chave)}
+                    >
+                      🗑️ Excluir relatório
+                    </button>
+                  )}
                 </div>
-              ));
+                );
+              });
           })()}
         </div>
       )}
@@ -5631,6 +5764,9 @@ function App() {
   const activeTopic = baseTopic
     ? { ...baseTopic, exercicios: [...baseTopic.exercicios, ...(custom[baseTopic.id] || [])] }
     : null;
+  const moduloAtivoId = baseTopic ? TOPICO_ID_PARA_NIVEL[baseTopic.id] : null;
+  const vidasModuloAtivo = moduloAtivoId ? vidasRestantesModulo(progress, moduloAtivoId) : VIDAS_POR_MODULO;
+  const primeiraTentativaAtiva = baseTopic ? ehPrimeiraTentativaTopico(progress, baseTopic.id) : true;
 
   function openTopic(topic) {
     setSelectedTopicId(topic.id);
@@ -5655,8 +5791,37 @@ function App() {
     });
   }
 
-  function onFail() {
-    save({ ...progress, falhasTotais: progress.falhasTotais + 1 });
+  // Uma vida do módulo perdida — chamado a cada erro na primeira tentativa
+  // de qualquer questão de qualquer tópico deste módulo.
+  function onPerderVidaModulo() {
+    if (!moduloAtivoId) return;
+    const atual = vidasRestantesModulo(progress, moduloAtivoId);
+    const nova = Math.max(0, atual - 1);
+    save({ ...progress, vidasModulo: { ...progress.vidasModulo, [moduloAtivoId]: nova } });
+  }
+
+  // Vidas do módulo zeradas: apaga o progresso de TODOS os tópicos desse
+  // módulo, devolve as 8 vidas e registra o evento (aparece no relatório).
+  function zerarModulo(moduloId) {
+    const ids = topicosDoModulo(moduloId).map((t) => t.id);
+    const novasStats = { ...progress.estatisticasPorTopico };
+    ids.forEach((id) => delete novasStats[id]);
+    save({
+      ...progress,
+      concluidos: progress.concluidos.filter((id) => !ids.includes(id)),
+      estatisticasPorTopico: novasStats,
+      vidasModulo: { ...progress.vidasModulo, [moduloId]: VIDAS_POR_MODULO },
+      modulosZerados: [
+        ...progress.modulosZerados,
+        { moduloId, moduloNome: nomeDoModulo(moduloId), data: new Date().toISOString() },
+      ],
+      falhasTotais: progress.falhasTotais + 1,
+    });
+  }
+
+  function onModuloZerado() {
+    if (moduloAtivoId) zerarModulo(moduloAtivoId);
+    setView("trilha");
   }
 
   function finishTopic(acertos, total) {
@@ -5716,10 +5881,13 @@ function App() {
       {view === "licao" && activeTopic && (
         <LicaoScreen
           topic={activeTopic}
+          vidasModulo={vidasModuloAtivo}
+          primeiraTentativa={primeiraTentativaAtiva}
           onFinish={finishTopic}
           onExit={() => setView("trilha")}
           onEachAnswer={onEachAnswer}
-          onFail={onFail}
+          onPerderVidaModulo={onPerderVidaModulo}
+          onModuloZerado={onModuloZerado}
         />
       )}
       {view === "resultado" && lastResult && (
@@ -5929,6 +6097,13 @@ const CSS = `
   box-shadow: 0 8px 28px rgba(129,48,23,0.10);
 }
 .nivel-title-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 14px; }
+.nivel-vidas {
+  margin-left: auto;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--pink, #D6336C);
+  white-space: nowrap;
+}
 .nivel-index {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10.5px;
@@ -6026,6 +6201,12 @@ const CSS = `
 .progress-fill { height: 100%; transition: width 0.3s ease; background: var(--pink) !important; }
 .hearts { font-size: 15px; letter-spacing: 2px; color: var(--pink); }
 .heart-lost { color: rgba(129,48,23,0.25); }
+.hearts-pratica {
+  font-size: 12px;
+  letter-spacing: normal;
+  color: rgba(129,48,23,0.65);
+  font-weight: 600;
+}
 
 .topic-tag {
   display: inline-block;
@@ -6140,6 +6321,7 @@ const CSS = `
   user-select: none;
 }
 .drag-chip.placed { cursor: default; padding: 5px 10px; font-size: 13px; }
+.drag-chip.placed.chip-movable { cursor: grab; }
 .chip-selected { outline: 2px solid var(--pink); background: rgba(255,43,111,0.18); }
 .chip-dragging-source { opacity: 0.25; }
 .drag-ghost {
@@ -6518,6 +6700,39 @@ const CSS = `
   color: rgba(129,48,23,0.7);
   margin-bottom: 6px;
 }
+.btn-excluir-link {
+  background: none;
+  border: none;
+  color: #B3261E;
+  font-size: 12.5px;
+  padding: 4px 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.relatorio-confirmar-excluir {
+  background: rgba(179,38,30,0.08);
+  border: 1px solid rgba(179,38,30,0.3);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 6px;
+  font-size: 13px;
+  color: #7A1D17;
+}
+.relatorio-confirmar-botoes {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.btn-excluir {
+  background: #B3261E;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.btn-excluir:disabled { opacity: 0.6; cursor: default; }
 
 .conquista-toast {
   position: fixed;
