@@ -3805,6 +3805,14 @@ const NIVEIS = [
 // Módulo 3 = Orações Coordenadas · Módulo 4 = Orações Subordinadas
 const TURMAS = ["1AA", "1DB", "1IA", "1IB", "2DB", "2IA", "3IA"];
 
+// Paleta fixa por turma, só pra dar identidade visual no painel do professor
+// (pílula colorida no cabeçalho de cada relatório do accordion).
+const PALETA_TURMAS = ["#D6336C", "#4A4E8B", "#4FA88F", "#FF8A5B", "#813017", "#FF2B6F", "#2E6B57"];
+function corDaTurma(turma) {
+  const i = TURMAS.indexOf(turma);
+  return PALETA_TURMAS[i >= 0 ? i % PALETA_TURMAS.length : 0];
+}
+
 function serieDaTurma(turma) {
   if (!turma) return null;
   const n = parseInt(turma[0], 10);
@@ -3873,6 +3881,37 @@ function nomeDoModulo(moduloId) {
 function ehPrimeiraTentativaTopico(progress, topicId) {
   const s = progress.estatisticasPorTopico[topicId];
   return !s || !s.tentativas || s.tentativas === 0;
+}
+
+/* =========================================================================
+   TESTE FINAL DE MÓDULO
+   10 questões sorteadas de TODOS os tópicos do módulo, priorizando cobrir o
+   máximo de tópicos diferentes (rodízio) antes de repetir. Sem vidas, sem
+   reprovação — sempre pode ser concluído e refeito.
+   ========================================================================= */
+const TAMANHO_TESTE_MODULO = 10;
+
+function gerarQuestoesTesteModulo(moduloId, custom, tamanho = TAMANHO_TESTE_MODULO) {
+  const topicos = topicosDoModulo(moduloId);
+  const filas = embaralhar(topicos).map((t) => ({
+    topicId: t.id,
+    fila: embaralhar([...t.exercicios, ...((custom && custom[t.id]) || [])]),
+  }));
+  const selecionadas = [];
+  let rodada = 0;
+  while (selecionadas.length < tamanho) {
+    let adicionouAlgo = false;
+    for (const f of filas) {
+      if (selecionadas.length >= tamanho) break;
+      if (f.fila[rodada]) {
+        selecionadas.push({ ...f.fila[rodada], _topicId: f.topicId });
+        adicionouAlgo = true;
+      }
+    }
+    if (!adicionouAlgo) break; // esgotou o banco de questões do módulo
+    rodada++;
+  }
+  return embaralhar(selecionadas);
 }
 
 const START_HEARTS = 5; // não usado mais: vidas agora são por módulo (ver VIDAS_POR_MODULO)
@@ -3944,11 +3983,12 @@ function estadoInicialProgress() {
     maiorSequencia: 0,
     vidasModulo: {}, // { [moduloId]: vidas restantes (0-8) }
     modulosZerados: [], // [{ moduloId, moduloNome, data }] — histórico p/ relatório
+    testesModulo: {}, // { [moduloId]: { feito, ultimaNota: {acertos,total}, historico: [...] } }
   };
 }
 
 /* =========================================================================
-   CONQUISTAS (50 objetivos)
+   CONQUISTAS
    ========================================================================= */
 
 function topicAchievementsParaTurma(topicosOk) {
@@ -4080,6 +4120,59 @@ function exploradorParaTurma(topicosOk) {
   };
 }
 
+// Selos ligados ao teste final de módulo e à recuperação de um módulo zerado.
+function testeAchievementsParaTurma(idsPermitidos) {
+  return idsPermitidos.flatMap((moduloId) => {
+    const nivel = NIVEIS.find((n) => n.id === moduloId);
+    if (!nivel) return [];
+    return [
+      {
+        id: `teste-feito-${moduloId}`,
+        nome: `Aprovado! ${nivel.titulo}`,
+        icone: "🎯",
+        cor: "#4A4E8B",
+        condicao: (p) => !!(p.testesModulo && p.testesModulo[moduloId] && p.testesModulo[moduloId].feito),
+      },
+      {
+        id: `teste-perfeito-${moduloId}`,
+        nome: `Nota Máxima no Teste: ${nivel.titulo}`,
+        icone: "💯",
+        cor: "#FF2B6F",
+        condicao: (p) => {
+          const t = p.testesModulo && p.testesModulo[moduloId];
+          return !!(t && t.historico && t.historico.some((h) => h.total > 0 && h.acertos === h.total));
+        },
+      },
+    ];
+  });
+}
+
+const segundaChanceAchievement = {
+  id: "segunda-chance",
+  nome: "Segunda Chance",
+  icone: "🔄",
+  cor: "#FF8A5B",
+  // Zerou um módulo por falta de vidas e voltou a concluir todos os tópicos dele.
+  condicao: (p) =>
+    !!(
+      p.modulosZerados &&
+      p.modulosZerados.length > 0 &&
+      p.modulosZerados.some((mz) => topicosDoModulo(mz.moduloId).every((t) => p.concluidos.includes(t.id)))
+    ),
+};
+
+function aprovadoEmTudoParaTurma(idsPermitidos) {
+  return {
+    id: "aprovado-em-tudo",
+    nome: "Aprovado em Tudo",
+    icone: "🏅",
+    cor: "#813017",
+    condicao: (p) =>
+      idsPermitidos.length > 0 &&
+      idsPermitidos.every((moduloId) => !!(p.testesModulo && p.testesModulo[moduloId] && p.testesModulo[moduloId].feito)),
+  };
+}
+
 // Monta a lista de conquistas visíveis/possíveis para a turma do aluno: só
 // entram tópicos e módulos que a turma realmente acessa, então nenhum selo
 // fica permanentemente impossível de conquistar.
@@ -4106,8 +4199,11 @@ function achievementsParaTurma(turma) {
     ...tiposAchievements,
     ...comboAchievements,
     ...exerciciosAchievements,
+    ...testeAchievementsParaTurma(idsPermitidos),
     naoDesistiu,
+    segundaChanceAchievement,
     exploradorParaTurma(topicosOk),
+    aprovadoEmTudoParaTurma(idsPermitidos),
   ];
 
   const colecionadorSupremo = {
@@ -4722,6 +4818,83 @@ function LicaoScreen({ topic, vidasModulo, primeiraTentativa, onFinish, onExit, 
 }
 
 /* =========================================================================
+   TESTE FINAL DE MÓDULO
+   10 questões de todos os tópicos do módulo juntos. Sem vidas em jogo —
+   sempre chega ao fim e sempre pode ser refeito depois.
+   ========================================================================= */
+
+function TesteModuloScreen({ questoes, moduloNome, onFinish, onExit }) {
+  const [idx, setIdx] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const [acertos, setAcertos] = useState(0);
+
+  const ex = questoes[idx];
+  const ultima = idx + 1 >= questoes.length;
+
+  function handleAnswer(correct, picked, pickedIdx) {
+    if (feedback) return;
+    setFeedback({ correct, picked, pickedIdx });
+    if (correct) setAcertos((a) => a + 1);
+  }
+
+  function next() {
+    setFeedback(null);
+    if (ultima) {
+      onFinish(acertos, questoes.length);
+    } else {
+      setIdx(idx + 1);
+    }
+  }
+
+  return (
+    <div className="screen">
+      <div className="lesson-header">
+        <button className="btn-x" onClick={onExit} aria-label="Sair do teste">
+          ×
+        </button>
+        <div className="progress-track">
+          <div
+            className="progress-fill"
+            style={{ width: `${(idx / questoes.length) * 100}%`, background: "#4A4E8B" }}
+          />
+        </div>
+        <span className="teste-contador">
+          {idx + 1}/{questoes.length}
+        </span>
+      </div>
+
+      <div className="lesson-body">
+        <div className="topic-tag teste-tag">📝 Teste final · {moduloNome}</div>
+
+        {ex.type === "mcq" && (
+          <McqExercise key={idx} ex={ex} onAnswer={handleAnswer} locked={!!feedback} feedback={feedback} />
+        )}
+        {ex.type === "classify" && (
+          <ClassifyExercise key={idx} ex={ex} onAnswer={handleAnswer} locked={!!feedback} feedback={feedback} />
+        )}
+        {ex.type === "fillblank" && (
+          <FillblankExercise key={idx} ex={ex} onAnswer={handleAnswer} locked={!!feedback} feedback={feedback} />
+        )}
+        {ex.type === "dragdrop" && (
+          <DragdropExercise key={idx} ex={ex} onAnswer={handleAnswer} locked={!!feedback} />
+        )}
+      </div>
+
+      {feedback && (
+        <div className={"feedback-bar " + (feedback.correct ? "fb-correct" : "fb-wrong")}>
+          <div className="fb-text">
+            {feedback.correct ? "Correto!" : `Quase. Resposta certa marcada acima.`}
+          </div>
+          <button className="btn-primary" onClick={next}>
+            {ultima ? "Ver resultado" : "Continuar"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* =========================================================================
    TELA DE RESULTADO
    ========================================================================= */
 
@@ -4744,11 +4917,36 @@ function ResultScreen({ acertos, total, xpGanho, onContinue }) {
   );
 }
 
+function ResultadoTesteScreen({ resultado, onRefazer, onContinuar }) {
+  const { acertos, total, xpGanho, moduloNome } = resultado;
+  const pct = Math.round((acertos / total) * 100);
+  return (
+    <div className="screen center-screen">
+      <div className="result-card">
+        <div className="result-stamp">🎉</div>
+        <h2>Módulo concluído!</h2>
+        <p className="result-sub">Parabéns por terminar {moduloNome}!</p>
+        <p className="result-sub">
+          Teste final: {acertos} de {total} corretas ({pct}%)
+        </p>
+        <div className="result-xp">+{xpGanho} XP</div>
+        <p className="teste-relatorio-aviso">📨 Um relatório foi enviado automaticamente ao professor.</p>
+        <button className="btn-primary" onClick={onContinuar}>
+          Voltar à trilha
+        </button>
+        <button className="btn-secundario" onClick={onRefazer}>
+          Refazer teste
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* =========================================================================
    TRILHA (MAPA DE NÍVEIS)
    ========================================================================= */
 
-function Trilha({ progress, onOpenTopic, onOpenProfessor, onOpenColecao, onOpenRelatorio, onTrocarAluno }) {
+function Trilha({ progress, onOpenTopic, onOpenProfessor, onOpenColecao, onOpenRelatorio, onTrocarAluno, onAbrirTeste }) {
   const achievements = achievementsParaTurma(progress.turma);
   const conquistas = achievements.filter((a) => a.condicao(progress)).length;
   const idsPermitidos = modulosLiberados(progress.turma);
@@ -4804,8 +5002,13 @@ function Trilha({ progress, onOpenTopic, onOpenProfessor, onOpenColecao, onOpenR
         const topicosNivelAnterior = nivelAnteriorVisivel
           ? TOPICOS_POR_NIVEL[nivelAnteriorVisivel.id]
           : null;
+        // Só desbloqueia o próximo módulo depois que os tópicos E o teste
+        // final do módulo anterior estiverem feitos.
+        const testeAnteriorFeito =
+          !nivelAnteriorVisivel || !!(progress.testesModulo && progress.testesModulo[nivelAnteriorVisivel.id] && progress.testesModulo[nivelAnteriorVisivel.id].feito);
         const nivelAnteriorCompleto =
-          !topicosNivelAnterior || topicosNivelAnterior.every((t) => progress.concluidos.includes(t.id));
+          (!topicosNivelAnterior || topicosNivelAnterior.every((t) => progress.concluidos.includes(t.id))) &&
+          testeAnteriorFeito;
 
         return (
           <section key={nivel.id} className="nivel-section">
@@ -4841,6 +5044,31 @@ function Trilha({ progress, onOpenTopic, onOpenProfessor, onOpenColecao, onOpenR
                   </div>
                 );
               })}
+              {(() => {
+                const topicosCompletos = topicosDoNivel.every((t) => progress.concluidos.includes(t.id));
+                const testeInfo = progress.testesModulo && progress.testesModulo[nivel.id];
+                const testeFeito = !!(testeInfo && testeInfo.feito);
+                return (
+                  <div className="node-row node-row-teste">
+                    <button
+                      className={
+                        "node node-teste" +
+                        (testeFeito ? " node-done" : "") +
+                        (!topicosCompletos ? " node-locked" : "")
+                      }
+                      style={{ background: topicosCompletos ? "#4A4E8B" : undefined }}
+                      disabled={!topicosCompletos}
+                      onClick={() => topicosCompletos && onAbrirTeste(nivel.id)}
+                    >
+                      {testeFeito ? "✓" : topicosCompletos ? "📝" : "🔒"}
+                    </button>
+                    <span className="node-name">
+                      Teste final · {nivel.titulo}
+                      {testeFeito ? ` — última nota ${testeInfo.ultimaNota.acertos}/${testeInfo.ultimaNota.total}` : ""}
+                    </span>
+                  </div>
+                );
+              })()}
             </div>
           </section>
         );
@@ -4939,12 +5167,10 @@ function ColecaoScreen({ progress, onExit }) {
    RELATÓRIO DE PROGRESSO
    ========================================================================= */
 
-function RelatorioScreen({ progress, onExit }) {
-  const [copiado, setCopiado] = useState(false);
-  const [enviado, setEnviado] = useState(false);
-  const [enviando, setEnviando] = useState(false);
-  const [erroEnvio, setErroEnvio] = useState("");
-
+// Monta os dados estruturados do relatório — usado tanto pra montar o texto
+// plano (copiar/enviar) quanto pra renderizar o cartão visual no painel do
+// professor.
+function construirDadosRelatorio(progress) {
   const topicosDaTurma = topicosParaTurma(progress.turma);
   const desempenho = topicosDaTurma.map((t) => {
     const s = progress.estatisticasPorTopico[t.id];
@@ -4981,37 +5207,246 @@ function RelatorioScreen({ progress, onExit }) {
   const totalErros = desempenho.reduce((soma, d) => soma + d.erros, 0);
   const facilidades = desempenho
     .filter((d) => d.pctPrimeira !== null && d.pctPrimeira >= 90)
-    .map((d) => `${d.nome} (${d.acertosPrimeira} acertos, ${d.errosPrimeira} erros na 1ª tentativa)`);
+    .sort((a, b) => b.pctPrimeira - a.pctPrimeira);
   const dificuldades = desempenho
     .filter((d) => d.pctPrimeira !== null && d.pctPrimeira < 70)
-    .map(
-      (d) =>
-        `${d.nome} (${d.acertosPrimeira} acertos, ${d.errosPrimeira} erros na 1ª tentativa${
-          d.dominouDepois ? " — já dominou depois" : ""
-        })`
-    );
-  const conquistas = achievementsParaTurma(progress.turma).filter((a) => a.condicao(progress)).length;
+    .sort((a, b) => a.pctPrimeira - b.pctPrimeira);
+  const achievements = achievementsParaTurma(progress.turma);
+  const conquistas = achievements.filter((a) => a.condicao(progress)).length;
   const modulosZerados = progress.modulosZerados || [];
+  const testesModuloObj = progress.testesModulo || {};
+  const testes = Object.keys(testesModuloObj)
+    .map(Number)
+    .sort((a, b) => a - b)
+    .filter((mId) => testesModuloObj[mId] && testesModuloObj[mId].feito)
+    .map((mId) => {
+      const t = testesModuloObj[mId];
+      return {
+        moduloNome: nomeDoModulo(mId),
+        acertos: t.ultimaNota.acertos,
+        total: t.ultimaNota.total,
+        tentativas: t.historico ? t.historico.length : 1,
+      };
+    });
+  const pctGeral =
+    totalAcertos + totalErros > 0 ? Math.round((totalAcertos / (totalAcertos + totalErros)) * 100) : null;
 
-  const texto = [
-    `Relatório de progresso — ${progress.nome || "Aluno(a)"}${progress.turma ? ` (${progress.turma})` : ""}`,
-    `Tópicos concluídos: ${progress.concluidos.length} de ${topicosDaTurma.length}`,
-    `XP total: ${progress.xp}`,
-    `Exercícios respondidos: ${progress.totalExerciciosRespondidos} (${totalAcertos} acertos, ${totalErros} erros no acumulado)`,
-    `Conquistas desbloqueadas: ${conquistas} de ${achievementsParaTurma(progress.turma).length}`,
+  return {
+    nome: progress.nome || "Aluno(a) sem nome",
+    turma: progress.turma || "",
+    xp: progress.xp,
+    topicosConcluidos: progress.concluidos.length,
+    topicosTotal: topicosDaTurma.length,
+    exerciciosRespondidos: progress.totalExerciciosRespondidos,
+    totalAcertos,
+    totalErros,
+    pctGeral,
+    conquistas,
+    conquistasTotal: achievements.length,
+    facilidades,
+    dificuldades,
+    testes,
+    modulosZerados: modulosZerados.map((m) => ({
+      moduloNome: m.moduloNome,
+      data: m.data,
+    })),
+  };
+}
+
+function construirTextoRelatorio(progress) {
+  const d = construirDadosRelatorio(progress);
+  const facilidadesTxt = d.facilidades
+    .map((f) => `${f.nome} (${f.acertosPrimeira} acertos, ${f.errosPrimeira} erros na 1ª tentativa)`)
+    .join(", ");
+  const dificuldadesTxt = d.dificuldades
+    .map(
+      (f) =>
+        `${f.nome} (${f.acertosPrimeira} acertos, ${f.errosPrimeira} erros na 1ª tentativa${
+          f.dominouDepois ? " — já dominou depois" : ""
+        })`
+    )
+    .join(", ");
+  const testesTexto = d.testes
+    .map((t) => `${t.moduloNome}: ${t.acertos}/${t.total}${t.tentativas > 1 ? ` (${t.tentativas}ª tentativa)` : ""}`)
+    .join(", ");
+
+  return [
+    `Relatório de progresso — ${d.nome}${d.turma ? ` (${d.turma})` : ""}`,
+    `Tópicos concluídos: ${d.topicosConcluidos} de ${d.topicosTotal}`,
+    `XP total: ${d.xp}`,
+    `Exercícios respondidos: ${d.exerciciosRespondidos} (${d.totalAcertos} acertos, ${d.totalErros} erros no acumulado)`,
+    `Conquistas desbloqueadas: ${d.conquistas} de ${d.conquistasTotal}`,
     "",
-    facilidades.length
-      ? `Facilidades (1ª tentativa): ${facilidades.join(", ")}`
+    facilidadesTxt
+      ? `Facilidades (1ª tentativa): ${facilidadesTxt}`
       : "Facilidades (1ª tentativa): ainda sem dados suficientes",
-    dificuldades.length
-      ? `Dificuldades (1ª tentativa): ${dificuldades.join(", ")}`
+    dificuldadesTxt
+      ? `Dificuldades (1ª tentativa): ${dificuldadesTxt}`
       : "Dificuldades (1ª tentativa): nenhuma dificuldade identificada até agora",
-    modulosZerados.length
-      ? `\nMódulos reiniciados por vidas esgotadas: ${modulosZerados
+    testesTexto ? `\nTestes finais de módulo: ${testesTexto}` : "",
+    d.modulosZerados.length
+      ? `\nMódulos reiniciados por vidas esgotadas: ${d.modulosZerados
           .map((m) => `${m.moduloNome} (${new Date(m.data).toLocaleDateString("pt-BR")})`)
           .join(", ")}`
       : "",
   ].join("\n");
+}
+
+// Envia o relatório ao professor (Firestore) sem depender de nenhuma tela —
+// usado tanto pelo botão manual quanto pelo envio automático ao terminar o
+// teste final de um módulo. Substitui qualquer relatório anterior do mesmo
+// aluno (nome + turma), igual ao envio manual.
+async function enviarRelatorioAoProfessor(progress) {
+  try {
+    if (!window.storage) return false;
+    let lista = [];
+    try {
+      const atual = await window.storage.get("relatorios-alunos", true);
+      lista = atual && atual.value ? JSON.parse(atual.value) : [];
+      if (!Array.isArray(lista)) lista = [];
+    } catch {
+      lista = [];
+    }
+    const nomeAtual = (progress.nome || "Aluno(a) sem nome").trim().toLowerCase();
+    const turmaAtual = (progress.turma || "").trim().toLowerCase();
+    lista = lista.filter(
+      (r) => !(String(r.nome || "").trim().toLowerCase() === nomeAtual && String(r.turma || "").trim().toLowerCase() === turmaAtual)
+    );
+    lista.push({
+      nome: progress.nome || "Aluno(a) sem nome",
+      turma: progress.turma || "",
+      data: new Date().toISOString(),
+      texto: construirTextoRelatorio(progress),
+      dados: construirDadosRelatorio(progress),
+    });
+    const resultado = await window.storage.set("relatorios-alunos", JSON.stringify(lista), true);
+    return !!resultado;
+  } catch {
+    return false;
+  }
+}
+
+// Cartão visual do relatório — duas colunas (facilidades/dificuldades),
+// estatísticas em destaque, testes finais e alertas de módulo zerado.
+// Reaproveitado na tela do aluno e no painel do professor.
+function RelatorioCard({ dados }) {
+  return (
+    <div className="relatorio-card">
+      <div className="relatorio-stats-row">
+        <div className="relatorio-stat">
+          <span className="relatorio-stat-num">{dados.xp}</span>
+          <span className="relatorio-stat-label">XP</span>
+        </div>
+        <div className="relatorio-stat">
+          <span className="relatorio-stat-num">
+            {dados.topicosConcluidos}/{dados.topicosTotal}
+          </span>
+          <span className="relatorio-stat-label">tópicos</span>
+        </div>
+        <div className="relatorio-stat">
+          <span className="relatorio-stat-num">
+            {dados.conquistas}/{dados.conquistasTotal}
+          </span>
+          <span className="relatorio-stat-label">selos</span>
+        </div>
+        {dados.pctGeral !== null && (
+          <div className="relatorio-stat">
+            <span className="relatorio-stat-num">{dados.pctGeral}%</span>
+            <span className="relatorio-stat-label">acerto geral</span>
+          </div>
+        )}
+      </div>
+
+      <div className="relatorio-colunas">
+        <div className="relatorio-coluna relatorio-coluna-facil">
+          <h4>
+            ✓ Facilidades <span className="relatorio-coluna-count">{dados.facilidades.length}</span>
+          </h4>
+          {dados.facilidades.length === 0 ? (
+            <p className="relatorio-vazio">ainda sem dados suficientes</p>
+          ) : (
+            <ul className="relatorio-lista">
+              {dados.facilidades.map((f) => (
+                <li key={f.nome}>
+                  <div className="relatorio-item-linha">
+                    <span className="relatorio-item-nome">{f.nome}</span>
+                    <span className="relatorio-item-pct">{f.pctPrimeira}%</span>
+                  </div>
+                  <div className="relatorio-barra">
+                    <div
+                      className="relatorio-barra-fill relatorio-barra-facil"
+                      style={{ width: `${f.pctPrimeira}%` }}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div className="relatorio-coluna relatorio-coluna-dificil">
+          <h4>
+            ⚠ Dificuldades <span className="relatorio-coluna-count">{dados.dificuldades.length}</span>
+          </h4>
+          {dados.dificuldades.length === 0 ? (
+            <p className="relatorio-vazio">nenhuma identificada até agora</p>
+          ) : (
+            <ul className="relatorio-lista">
+              {dados.dificuldades.map((f) => (
+                <li key={f.nome}>
+                  <div className="relatorio-item-linha">
+                    <span className="relatorio-item-nome">
+                      {f.nome}
+                      {f.dominouDepois ? " · já dominou depois" : ""}
+                    </span>
+                    <span className="relatorio-item-pct">{f.pctPrimeira}%</span>
+                  </div>
+                  <div className="relatorio-barra">
+                    <div
+                      className="relatorio-barra-fill relatorio-barra-dificil"
+                      style={{ width: `${f.pctPrimeira}%` }}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+
+      {dados.testes.length > 0 && (
+        <div className="relatorio-testes">
+          <h4>📝 Testes finais de módulo</h4>
+          <ul className="relatorio-testes-lista">
+            {dados.testes.map((t) => (
+              <li key={t.moduloNome}>
+                {t.moduloNome}: <strong>{t.acertos}/{t.total}</strong>
+                {t.tentativas > 1 ? ` (${t.tentativas}ª tentativa)` : ""}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {dados.modulosZerados.length > 0 && (
+        <div className="relatorio-alerta">
+          ⚠️ Módulos reiniciados por vidas esgotadas:{" "}
+          {dados.modulosZerados
+            .map((m) => `${m.moduloNome} (${new Date(m.data).toLocaleDateString("pt-BR")})`)
+            .join(", ")}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RelatorioScreen({ progress, onExit }) {
+  const [copiado, setCopiado] = useState(false);
+  const [enviado, setEnviado] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [erroEnvio, setErroEnvio] = useState("");
+
+  const dados = construirDadosRelatorio(progress);
+  const texto = construirTextoRelatorio(progress);
 
   async function copiar() {
     try {
@@ -5027,42 +5462,12 @@ function RelatorioScreen({ progress, onExit }) {
     setEnviando(true);
     setErroEnvio("");
     setEnviado(false);
-    try {
-      if (!window.storage) {
-        throw new Error("Armazenamento indisponível neste ambiente.");
-      }
-      let lista = [];
-      try {
-        const atual = await window.storage.get("relatorios-alunos", true);
-        lista = atual && atual.value ? JSON.parse(atual.value) : [];
-        if (!Array.isArray(lista)) lista = [];
-      } catch {
-        lista = []; // ainda não existe nenhum relatório salvo — começamos a lista agora
-      }
-      // Remove qualquer relatório anterior do mesmo aluno (nome + turma) antes
-      // de gravar o novo — evita acumular relatórios desatualizados da mesma
-      // pessoa, o painel do professor sempre mostra só o mais recente.
-      const nomeAtual = (progress.nome || "Aluno(a) sem nome").trim().toLowerCase();
-      const turmaAtual = (progress.turma || "").trim().toLowerCase();
-      lista = lista.filter(
-        (r) => !(String(r.nome || "").trim().toLowerCase() === nomeAtual && String(r.turma || "").trim().toLowerCase() === turmaAtual)
-      );
-      lista.push({
-        nome: progress.nome || "Aluno(a) sem nome",
-        turma: progress.turma || "",
-        data: new Date().toISOString(),
-        texto,
-      });
-      const resultado = await window.storage.set("relatorios-alunos", JSON.stringify(lista), true);
-      if (!resultado) {
-        throw new Error("A gravação não foi confirmada.");
-      }
+    const ok = await enviarRelatorioAoProfessor(progress);
+    if (ok) {
       setEnviado(true);
-    } catch (e) {
+    } else {
       setErroEnvio(
-        "Não foi possível enviar agora (" +
-          (e && e.message ? e.message : "erro desconhecido") +
-          "). Copie o relatório e envie por outro meio, ou tente novamente."
+        "Não foi possível enviar agora. Copie o relatório e envie por outro meio, ou tente novamente."
       );
     }
     setEnviando(false);
@@ -5077,7 +5482,7 @@ function RelatorioScreen({ progress, onExit }) {
         <h2 className="professor-title">Relatório de progresso</h2>
       </div>
       <div className="lesson-body">
-        <pre className="relatorio-texto">{texto}</pre>
+        <RelatorioCard dados={dados} />
         <button className="btn-primary" onClick={copiar}>
           {copiado ? "Copiado!" : "Copiar relatório"}
         </button>
@@ -5085,6 +5490,10 @@ function RelatorioScreen({ progress, onExit }) {
           {enviando ? "Enviando…" : enviado ? "Enviado ao professor ✓" : "Enviar ao professor"}
         </button>
         {erroEnvio && <p className="pin-erro">{erroEnvio}</p>}
+        <details className="relatorio-texto-bruto">
+          <summary>Ver texto simples (pra copiar em outro lugar)</summary>
+          <pre className="relatorio-texto">{texto}</pre>
+        </details>
       </div>
     </div>
   );
@@ -5180,6 +5589,11 @@ function ProfessorPanel({ custom, onSave, onExit }) {
   const [ordenarPor, setOrdenarPor] = useState("nome");
   const [confirmandoExcluir, setConfirmandoExcluir] = useState(null); // chave do relatório pendente de confirmação
   const [excluindoRelatorio, setExcluindoRelatorio] = useState(false);
+  const [expandidos, setExpandidos] = useState({}); // { [chave]: true } — quais alunos estão abertos no accordion
+
+  function alternarExpandido(chave) {
+    setExpandidos((e) => ({ ...e, [chave]: !e[chave] }));
+  }
 
   const chaveRelatorio = (r) => `${r.nome || ""}__${r.turma || ""}__${r.data || ""}`;
 
@@ -5438,43 +5852,81 @@ function ProfessorPanel({ custom, onSave, onExit }) {
             return relatoriosOrdenados.map((r, i) => {
                 const chave = chaveRelatorio(r);
                 const confirmando = confirmandoExcluir === chave;
+                const aberto = !!expandidos[chave];
+                const dados = r.dados || null; // relatórios antigos (antes do cartão visual) não têm isso
+                const temDificuldade = dados ? dados.dificuldades.length > 0 : false;
+                const temAlerta = dados ? dados.modulosZerados.length > 0 : false;
                 return (
-                <div className="relatorio-item" key={i}>
-                  <div className="relatorio-item-header">
-                    <strong>
-                      {r.nome}
-                      {r.turma ? ` · ${r.turma}` : ""}
-                    </strong>
-                    <span>{new Date(r.data).toLocaleString("pt-BR")}</span>
-                  </div>
-                  <pre className="relatorio-texto">{r.texto}</pre>
-                  {confirmando ? (
-                    <div className="relatorio-confirmar-excluir">
-                      <span>Excluir este relatório? Essa ação não pode ser desfeita.</span>
-                      <div className="relatorio-confirmar-botoes">
+                <div className="relatorio-item relatorio-accordion" key={i}>
+                  <button
+                    className="relatorio-accordion-header"
+                    onClick={() => alternarExpandido(chave)}
+                    style={{ borderLeftColor: corDaTurma(r.turma) }}
+                  >
+                    <span className="relatorio-accordion-nome">
+                      <strong>{r.nome}</strong>
+                      {r.turma && (
+                        <span className="relatorio-turma-pill" style={{ background: corDaTurma(r.turma) }}>
+                          {r.turma}
+                        </span>
+                      )}
+                    </span>
+                    <span className="relatorio-accordion-resumo">
+                      {dados ? (
+                        <>
+                          <span className="relatorio-resumo-item">{dados.xp} XP</span>
+                          <span className="relatorio-resumo-item">
+                            {dados.topicosConcluidos}/{dados.topicosTotal} tópicos
+                          </span>
+                          {temDificuldade && (
+                            <span className="relatorio-resumo-alerta">⚠ {dados.dificuldades.length}</span>
+                          )}
+                          {temAlerta && <span className="relatorio-resumo-alerta">🔁</span>}
+                        </>
+                      ) : (
+                        <span className="relatorio-resumo-item">ver relatório</span>
+                      )}
+                    </span>
+                    <span className="relatorio-accordion-data">{new Date(r.data).toLocaleDateString("pt-BR")}</span>
+                    <span className={"relatorio-accordion-seta" + (aberto ? " aberto" : "")}>▾</span>
+                  </button>
+
+                  {aberto && (
+                    <div className="relatorio-accordion-corpo">
+                      {dados ? (
+                        <RelatorioCard dados={dados} />
+                      ) : (
+                        <pre className="relatorio-texto">{r.texto}</pre>
+                      )}
+                      {confirmando ? (
+                        <div className="relatorio-confirmar-excluir">
+                          <span>Excluir este relatório? Essa ação não pode ser desfeita.</span>
+                          <div className="relatorio-confirmar-botoes">
+                            <button
+                              className="btn-secundario"
+                              onClick={() => setConfirmandoExcluir(null)}
+                              disabled={excluindoRelatorio}
+                            >
+                              Cancelar
+                            </button>
+                            <button
+                              className="btn-excluir"
+                              onClick={() => excluirRelatorio(r)}
+                              disabled={excluindoRelatorio}
+                            >
+                              {excluindoRelatorio ? "Excluindo…" : "Sim, excluir"}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
                         <button
-                          className="btn-secundario"
-                          onClick={() => setConfirmandoExcluir(null)}
-                          disabled={excluindoRelatorio}
+                          className="btn-excluir-link"
+                          onClick={() => setConfirmandoExcluir(chave)}
                         >
-                          Cancelar
+                          🗑️ Excluir relatório
                         </button>
-                        <button
-                          className="btn-excluir"
-                          onClick={() => excluirRelatorio(r)}
-                          disabled={excluindoRelatorio}
-                        >
-                          {excluindoRelatorio ? "Excluindo…" : "Sim, excluir"}
-                        </button>
-                      </div>
+                      )}
                     </div>
-                  ) : (
-                    <button
-                      className="btn-excluir-link"
-                      onClick={() => setConfirmandoExcluir(chave)}
-                    >
-                      🗑️ Excluir relatório
-                    </button>
                   )}
                 </div>
                 );
@@ -5678,10 +6130,13 @@ function ProfessorPanel({ custom, onSave, onExit }) {
 function App() {
   const { progress, save, loaded, trocarAluno, identificarAluno } = useProgress();
   const { custom, save: saveCustom, loaded: customLoaded } = useCustomQuestions();
-  // trilha | teoria | licao | resultado | colecao | relatorio | professorLogin | professorPanel
+  // trilha | teoria | licao | resultado | colecao | relatorio | professorLogin | professorPanel | testeModulo | resultadoTeste
   const [view, setView] = useState("trilha");
   const [selectedTopicId, setSelectedTopicId] = useState(null);
   const [lastResult, setLastResult] = useState(null);
+  const [testeModuloId, setTesteModuloId] = useState(null);
+  const [testeQuestoes, setTesteQuestoes] = useState(null);
+  const [lastTesteResult, setLastTesteResult] = useState(null);
   const streakChecked = useRef(false);
   const prevUnlockedRef = useRef(null);
   const [filaConquistas, setFilaConquistas] = useState([]);
@@ -5859,6 +6314,36 @@ function App() {
     setView("resultado");
   }
 
+  function abrirTesteModulo(moduloId) {
+    const questoes = gerarQuestoesTesteModulo(moduloId, custom, TAMANHO_TESTE_MODULO);
+    setTesteModuloId(moduloId);
+    setTesteQuestoes(questoes);
+    setView("testeModulo");
+  }
+
+  function finishTesteModulo(acertos, total) {
+    const moduloId = testeModuloId;
+    const existente = progress.testesModulo ? progress.testesModulo[moduloId] : null;
+    const jaFeitoAntes = !!(existente && existente.feito);
+    const bonusPrimeiraVez = jaFeitoAntes ? 0 : 20;
+    const xpGanho = acertos * 10 + bonusPrimeiraVez;
+    const novoRegistro = {
+      feito: true,
+      ultimaNota: { acertos, total },
+      historico: [...((existente && existente.historico) || []), { acertos, total, data: new Date().toISOString() }].slice(-10),
+    };
+    const next = {
+      ...progress,
+      xp: progress.xp + xpGanho,
+      testesModulo: { ...progress.testesModulo, [moduloId]: novoRegistro },
+    };
+    save(next);
+    // Envia o relatório automaticamente ao professor com o progresso já atualizado
+    enviarRelatorioAoProfessor(next);
+    setLastTesteResult({ acertos, total, xpGanho, moduloNome: nomeDoModulo(moduloId) });
+    setView("resultadoTeste");
+  }
+
   return (
     <div className="app-shell">
       <style>{CSS}</style>
@@ -5873,6 +6358,7 @@ function App() {
           onOpenColecao={() => setView("colecao")}
           onOpenRelatorio={() => setView("relatorio")}
           onTrocarAluno={trocarAluno}
+          onAbrirTeste={abrirTesteModulo}
         />
       )}
       {view === "teoria" && baseTopic && (
@@ -5896,6 +6382,21 @@ function App() {
           total={lastResult.total}
           xpGanho={lastResult.xpGanho}
           onContinue={() => setView("trilha")}
+        />
+      )}
+      {view === "testeModulo" && testeQuestoes && (
+        <TesteModuloScreen
+          questoes={testeQuestoes}
+          moduloNome={nomeDoModulo(testeModuloId)}
+          onFinish={finishTesteModulo}
+          onExit={() => setView("trilha")}
+        />
+      )}
+      {view === "resultadoTeste" && lastTesteResult && (
+        <ResultadoTesteScreen
+          resultado={lastTesteResult}
+          onRefazer={() => abrirTesteModulo(testeModuloId)}
+          onContinuar={() => setView("trilha")}
         />
       )}
       {view === "colecao" && <ColecaoScreen progress={progress} onExit={() => setView("trilha")} />}
@@ -6151,6 +6652,8 @@ const CSS = `
 }
 .node-done { outline: 2px solid rgba(255,255,255,0.9); outline-offset: 2px; }
 .node-name { font-weight: 600; font-size: 14.5px; color: var(--brown); }
+.node-row-teste { margin-top: 2px; }
+.node-teste { border-style: dashed; }
 
 .nivel-locked-card {
   border-radius: 16px;
@@ -6219,6 +6722,18 @@ const CSS = `
   margin-bottom: 18px;
   backdrop-filter: blur(6px);
   box-shadow: 0 4px 12px rgba(129,48,23,0.2);
+}
+.teste-tag { background: #4A4E8B; }
+.teste-contador {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--brown);
+  white-space: nowrap;
+}
+.teste-relatorio-aviso {
+  font-size: 12.5px;
+  color: rgba(129,48,23,0.7);
+  margin: 4px 0 14px;
 }
 
 .ex-prompt {
@@ -6733,6 +7248,172 @@ const CSS = `
   cursor: pointer;
 }
 .btn-excluir:disabled { opacity: 0.6; cursor: default; }
+
+/* Accordion de relatórios (painel do professor) */
+.relatorio-accordion {
+  border: 1px solid rgba(129,48,23,0.12);
+  border-radius: 12px;
+  padding: 0;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.relatorio-accordion-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: rgba(255,255,255,0.5);
+  border: none;
+  border-left: 4px solid rgba(129,48,23,0.4);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+.relatorio-accordion-nome {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--brown);
+  flex-shrink: 0;
+}
+.relatorio-turma-pill {
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.relatorio-accordion-resumo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  font-size: 12px;
+  color: rgba(129,48,23,0.65);
+  flex-wrap: wrap;
+}
+.relatorio-resumo-item { white-space: nowrap; }
+.relatorio-resumo-alerta {
+  color: #B3261E;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.relatorio-accordion-data {
+  font-size: 11px;
+  color: rgba(129,48,23,0.5);
+  white-space: nowrap;
+}
+.relatorio-accordion-seta {
+  transition: transform 0.15s ease;
+  color: rgba(129,48,23,0.5);
+}
+.relatorio-accordion-seta.aberto { transform: rotate(180deg); }
+.relatorio-accordion-corpo {
+  padding: 14px;
+  border-top: 1px solid rgba(129,48,23,0.1);
+}
+
+/* Cartão de relatório: estatísticas + duas colunas */
+.relatorio-card { display: flex; flex-direction: column; gap: 16px; }
+.relatorio-stats-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.relatorio-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255,255,255,0.55);
+  border-radius: 10px;
+  padding: 8px 14px;
+  min-width: 64px;
+}
+.relatorio-stat-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--brown);
+}
+.relatorio-stat-label {
+  font-size: 10px;
+  color: rgba(129,48,23,0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.relatorio-colunas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 480px) {
+  .relatorio-colunas { grid-template-columns: 1fr; }
+}
+.relatorio-coluna {
+  border-radius: 12px;
+  padding: 12px;
+}
+.relatorio-coluna-facil { background: rgba(79,168,143,0.12); }
+.relatorio-coluna-dificil { background: rgba(255,43,111,0.1); }
+.relatorio-coluna h4 {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--brown);
+}
+.relatorio-coluna-count {
+  font-size: 10.5px;
+  background: rgba(129,48,23,0.12);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+.relatorio-vazio { font-size: 12px; color: rgba(129,48,23,0.55); margin: 0; }
+.relatorio-lista { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.relatorio-item-linha {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--brown);
+  margin-bottom: 3px;
+}
+.relatorio-item-nome { flex: 1; }
+.relatorio-item-pct { font-family: 'JetBrains Mono', monospace; font-weight: 700; white-space: nowrap; }
+.relatorio-barra {
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(129,48,23,0.12);
+  overflow: hidden;
+}
+.relatorio-barra-fill { height: 100%; border-radius: 999px; }
+.relatorio-barra-facil { background: #4FA88F; }
+.relatorio-barra-dificil { background: #D6336C; }
+.relatorio-testes {
+  background: rgba(74,78,139,0.1);
+  border-radius: 12px;
+  padding: 12px;
+}
+.relatorio-testes h4 { margin: 0 0 6px; font-size: 12.5px; color: var(--brown); }
+.relatorio-testes-lista { list-style: none; padding: 0; margin: 0; font-size: 12.5px; color: var(--brown); display: flex; flex-direction: column; gap: 4px; }
+.relatorio-alerta {
+  background: rgba(179,38,30,0.1);
+  border: 1px solid rgba(179,38,30,0.25);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #7A1D17;
+}
+.relatorio-texto-bruto {
+  margin-top: 12px;
+  font-size: 12.5px;
+  color: rgba(129,48,23,0.6);
+}
+.relatorio-texto-bruto summary { cursor: pointer; }
+.relatorio-texto-bruto .relatorio-texto { margin-top: 8px; }
 
 .conquista-toast {
   position: fixed;
